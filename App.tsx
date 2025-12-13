@@ -18,7 +18,10 @@ import {
   Camera,
   CheckCircle,
   Lock,
-  DollarSign
+  DollarSign,
+  Mail,
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 import { Part, User, GalleryItem, BuilderJob } from './types';
 
@@ -26,23 +29,23 @@ import { Part, User, GalleryItem, BuilderJob } from './types';
 
 const MOCK_PARTS: Part[] = [
   // Chassis
-  { id: 'c1', name: 'Nebula Core X1 (3D Printed)', price: 150, type: 'chassis', image: 'https://picsum.photos/id/1/400/400' },
-  { id: 'c2', name: 'Void Walker S (Glass)', price: 200, type: 'chassis', image: 'https://picsum.photos/id/2/400/400' },
+  { id: 'c1', name: 'Nebula Core X1 (3D Printed)', price: 150, type: 'chassis', image: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=400&auto=format&fit=crop' },
+  { id: 'c2', name: 'Void Walker S (Glass)', price: 200, type: 'chassis', image: 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?q=80&w=400&auto=format&fit=crop' },
   // CPU
-  { id: 'cpu1', name: 'Intel Core i9-14900K', price: 600, type: 'cpu', image: 'https://picsum.photos/id/3/200/200' },
-  { id: 'cpu2', name: 'AMD Ryzen 9 7950X3D', price: 650, type: 'cpu', image: 'https://picsum.photos/id/4/200/200' },
+  { id: 'cpu1', name: 'Intel Core i9-14900K', price: 600, type: 'cpu', image: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=200&auto=format&fit=crop' },
+  { id: 'cpu2', name: 'AMD Ryzen 9 7950X3D', price: 650, type: 'cpu', image: 'https://images.unsplash.com/photo-1555618254-76a0d46e398d?q=80&w=200&auto=format&fit=crop' },
   // GPU
-  { id: 'gpu1', name: 'NVIDIA RTX 4090 OC', price: 1600, type: 'gpu', image: 'https://picsum.photos/id/5/300/200' },
-  { id: 'gpu2', name: 'NVIDIA RTX 4080 Super', price: 1000, type: 'gpu', image: 'https://picsum.photos/id/6/300/200' },
+  { id: 'gpu1', name: 'NVIDIA RTX 4090 OC', price: 1600, type: 'gpu', image: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=300&auto=format&fit=crop' },
+  { id: 'gpu2', name: 'NVIDIA RTX 4080 Super', price: 1000, type: 'gpu', image: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=300&auto=format&fit=crop' },
   // RAM
-  { id: 'ram1', name: 'Corsair Dom. Titanium 64GB', price: 300, type: 'ram', image: 'https://picsum.photos/id/7/200/200' },
-  { id: 'ram2', name: 'G.Skill Trident Z5 32GB', price: 150, type: 'ram', image: 'https://picsum.photos/id/8/200/200' },
+  { id: 'ram1', name: 'Corsair Dom. Titanium 64GB', price: 300, type: 'ram', image: 'https://images.unsplash.com/photo-1562976540-1502c2145186?q=80&w=200&auto=format&fit=crop' },
+  { id: 'ram2', name: 'G.Skill Trident Z5 32GB', price: 150, type: 'ram', image: 'https://images.unsplash.com/photo-1562976540-1502c2145186?q=80&w=200&auto=format&fit=crop' },
   // Storage
-  { id: 'st1', name: 'Samsung 990 Pro 2TB', price: 180, type: 'storage', image: 'https://picsum.photos/id/9/200/200' },
+  { id: 'st1', name: 'Samsung 990 Pro 2TB', price: 180, type: 'storage', image: 'https://images.unsplash.com/photo-1597872250969-bc3a2d25d8a9?q=80&w=200&auto=format&fit=crop' },
   // PSU
-  { id: 'psu1', name: 'Thor 1200W Platinum', price: 300, type: 'psu', image: 'https://picsum.photos/id/10/200/200' },
+  { id: 'psu1', name: 'Thor 1200W Platinum', price: 300, type: 'psu', image: 'https://images.unsplash.com/photo-1544652478-6653e09f1826?q=80&w=200&auto=format&fit=crop' },
   // MB
-  { id: 'mb1', name: 'ROG Maximus Z790', price: 500, type: 'motherboard', image: 'https://picsum.photos/id/11/300/300' },
+  { id: 'mb1', name: 'ROG Maximus Z790', price: 500, type: 'motherboard', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=300&auto=format&fit=crop' },
 ];
 
 const MOCK_GALLERY: GalleryItem[] = [
@@ -316,19 +319,136 @@ const Configurator: React.FC<{ user: User | null }> = ({ user }) => {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                className="relative w-64 h-96 border-4 border-slate-700 bg-slate-800/80 rounded-lg flex items-center justify-center shadow-2xl shadow-cyan-900/20"
+                className="relative w-72 h-[32rem] border-4 border-slate-700 bg-slate-800/90 rounded-xl flex flex-col items-center shadow-2xl shadow-cyan-900/20 overflow-hidden"
                >
-                  {/* Simulated Chassis */}
-                  <div className="absolute top-0 w-full h-8 bg-slate-700/50"></div>
-                  <div className="text-slate-500 font-bold text-4xl rotate-90 opacity-20">NEBULA</div>
+                  {/* Chassis Image Background (faint) */}
+                  <img src={selectedParts.chassis.image} alt="chassis" className="absolute inset-0 w-full h-full object-cover opacity-10 pointer-events-none blur-sm" />
                   
-                  {/* Dynamic Parts Appearance */}
-                  <div className="absolute inset-4 flex flex-col gap-2 justify-center">
-                     {selectedParts.motherboard && <motion.div initial={{x: -50, opacity:0}} animate={{x:0, opacity:1}} className="w-full h-40 bg-slate-600/50 border border-slate-500 rounded flex items-center justify-center text-xs">MOBO</motion.div>}
-                     {selectedParts.gpu && <motion.div initial={{x: 50, opacity:0}} animate={{x:0, opacity:1}} className="w-full h-12 bg-green-500/20 border border-green-500/50 rounded flex items-center justify-center text-xs text-green-300">GPU ACTIVE</motion.div>}
+                  <div className="absolute top-0 w-full h-full flex flex-col p-4 z-10 gap-2">
+                    {/* Top Section: Motherboard Area */}
+                    <div className="relative flex-[2] w-full border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/20">
+                        {/* Motherboard */}
+                        {selectedParts.motherboard && (
+                            <motion.img 
+                                layoutId="mobo"
+                                src={selectedParts.motherboard.image} 
+                                className="absolute inset-2 w-[calc(100%-1rem)] h-[calc(100%-1rem)] object-cover opacity-60 rounded-lg"
+                                initial={{opacity: 0, scale: 0.98}} 
+                                animate={{opacity: 0.6, scale: 1}}
+                                transition={{duration: 0.5}}
+                            />
+                        )}
+
+                        {/* CPU (Center of Mobo) */}
+                        {selectedParts.cpu && (
+                            <motion.div 
+                                initial={{y: -20, opacity: 0, scale: 1.1}} 
+                                animate={{y: 0, opacity: 1, scale: 1}}
+                                transition={{type: "spring", stiffness: 260, damping: 20}}
+                                className="absolute top-[25%] left-1/2 -translate-x-1/2 w-16 h-16 bg-slate-900 border border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.5)] z-20 flex items-center justify-center rounded overflow-hidden"
+                            >
+                                <img src={selectedParts.cpu.image} className="w-full h-full object-cover opacity-80" />
+                                <div className="absolute bottom-0 w-full text-center text-[7px] text-cyan-400 bg-black/70 py-0.5">CPU</div>
+                                <motion.div 
+                                    initial={{ opacity: 1 }}
+                                    animate={{ opacity: 0 }}
+                                    transition={{ duration: 0.5, delay: 0.2 }}
+                                    className="absolute inset-0 bg-cyan-400 mix-blend-overlay"
+                                />
+                            </motion.div>
+                        )}
+
+                        {/* RAM (Right of CPU) */}
+                        {selectedParts.ram && (
+                            <motion.div 
+                                initial={{y: -20, opacity: 0}} 
+                                animate={{y: 0, opacity: 1}}
+                                transition={{type: "spring", stiffness: 260, damping: 20, delay: 0.1}}
+                                className="absolute top-[25%] right-[15%] w-6 h-[40%] bg-red-500/10 border border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)] z-20 flex flex-col overflow-hidden rounded"
+                            >
+                                <img src={selectedParts.ram.image} className="w-full h-full object-cover opacity-80" />
+                                <motion.div 
+                                    initial={{ opacity: 1 }}
+                                    animate={{ opacity: 0 }}
+                                    transition={{ duration: 0.5, delay: 0.3 }}
+                                    className="absolute inset-0 bg-red-500 mix-blend-overlay"
+                                />
+                            </motion.div>
+                        )}
+                    </div>
+
+                    {/* Middle Section: GPU Area */}
+                    <div className="relative h-24 w-full border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/20 perspective-[1000px]">
+                        {selectedParts.gpu ? (
+                            <motion.div 
+                                initial={{x: -60, opacity: 0}} 
+                                animate={{x: 0, opacity: 1}}
+                                transition={{type: "spring", stiffness: 200, damping: 20}}
+                                className="relative w-[95%] h-20 bg-slate-800 border border-green-500 rounded flex items-center shadow-[0_0_20px_rgba(34,197,94,0.3)] overflow-hidden"
+                            >
+                                <img src={selectedParts.gpu.image} className="w-full h-full object-cover opacity-90" />
+                                <div className="absolute bottom-1 right-1 text-[9px] text-green-400 font-bold bg-black/60 px-2 rounded backdrop-blur-sm">GPU INSTALLED</div>
+                                <motion.div 
+                                    initial={{ opacity: 1 }}
+                                    animate={{ opacity: 0 }}
+                                    transition={{ duration: 0.5, delay: 0.2 }}
+                                    className="absolute inset-0 bg-green-400 mix-blend-overlay"
+                                />
+                            </motion.div>
+                        ) : <span className="text-xs text-slate-600 font-mono tracking-widest">PCIE SLOT</span>}
+                    </div>
+
+                    {/* Bottom Section: PSU & Storage */}
+                    <div className="flex h-20 gap-2 w-full">
+                        {/* PSU */}
+                        <div className="flex-[2] border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/20 overflow-hidden relative group">
+                            {selectedParts.psu ? (
+                                <motion.div 
+                                    className="w-full h-full relative"
+                                    initial={{x: -40, opacity: 0}}
+                                    animate={{x: 0, opacity: 1}}
+                                    transition={{type: "spring", stiffness: 200, damping: 20}}
+                                >
+                                    <img 
+                                        src={selectedParts.psu.image} 
+                                        className="w-full h-full object-cover opacity-80"
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span className="text-[10px] font-bold text-white">POWER</span>
+                                    </div>
+                                    <motion.div 
+                                      initial={{ opacity: 0.5 }}
+                                      animate={{ opacity: 0 }}
+                                      transition={{ duration: 0.5 }}
+                                      className="absolute inset-0 bg-white/20"
+                                    />
+                                </motion.div>
+                            ) : <span className="text-xs text-slate-600">PSU BAY</span>}
+                        </div>
+                        {/* Storage */}
+                        <div className="flex-1 border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/20 overflow-hidden relative">
+                             {selectedParts.storage ? (
+                                <motion.div
+                                    className="w-full h-full relative"
+                                    initial={{scale: 0.8, opacity: 0}} 
+                                    animate={{scale: 1, opacity: 1}}
+                                    transition={{type: "spring", stiffness: 300, damping: 15}}
+                                >
+                                    <img src={selectedParts.storage.image} className="w-full h-full object-cover opacity-80" />
+                                    <motion.div 
+                                      initial={{ opacity: 1 }}
+                                      animate={{ opacity: 0 }}
+                                      transition={{ duration: 0.5 }}
+                                      className="absolute inset-0 bg-white/20"
+                                    />
+                                </motion.div>
+                            ) : <span className="text-xs text-slate-600">SSD</span>}
+                        </div>
+                    </div>
                   </div>
                   
-                  {selectedParts.cpu && <motion.div initial={{scale: 2, opacity:0}} animate={{scale:1, opacity:1}} className="absolute top-1/3 w-8 h-8 bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.8)]"></motion.div>}
+                  {/* Glass Panel Reflection overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none rounded-xl border border-white/5"></div>
                </motion.div>
              ) : (
                <div className="text-center text-slate-500">
@@ -339,9 +459,9 @@ const Configurator: React.FC<{ user: User | null }> = ({ user }) => {
           </AnimatePresence>
 
           {/* Stats Overlay */}
-          <div className="absolute bottom-4 left-4 right-4 flex justify-between text-xs text-slate-400">
-             <span>Power: {selectedParts.psu ? 'Optimal' : 'Checking...'}</span>
-             <span>Compatibility: 100%</span>
+          <div className="absolute bottom-4 left-4 right-4 flex justify-between text-xs text-slate-400 z-20">
+             <span>Power: {selectedParts.psu ? <span className="text-green-400">Stable</span> : 'Checking...'}</span>
+             <span>Est. Wattage: {selectedParts.gpu && selectedParts.cpu ? '750W' : '---'}</span>
           </div>
         </div>
 
@@ -607,65 +727,243 @@ const BuilderSection: React.FC<{ user: User | null; onLogin: (u: User) => void }
 // 8. Auth / Login (Simple)
 const AuthPage: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
   const [isRegister, setIsRegister] = useState(false);
+  const [verificationStep, setVerificationStep] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [inputCode, setInputCode] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate API call
+    // Simulate API call for login
     const mockUser: User = {
       id: 'u_' + Math.random(),
-      name: formData.name || 'New User',
+      name: formData.name || 'Returning User',
       email: formData.email,
       role: 'user',
-      isFirstTime: isRegister // If registering, they are first time
+      isFirstTime: false
     };
     onLogin(mockUser);
+  };
+
+  const initiateRegistration = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.email || !formData.name || !formData.password) {
+      alert("Please fill in all fields");
+      return;
+    }
+    
+    setIsLoading(true);
+
+    try {
+      // ATTEMPT BACKEND CONNECTION
+      const response = await fetch('http://localhost:5000/api/register-init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        // If server error, assume running in demo/fallback mode if demoCode is present
+        if (data.demoCode) {
+           setGeneratedCode(data.demoCode);
+        } else {
+           throw new Error(data.message || 'Registration failed');
+        }
+      }
+
+      setVerificationStep(true);
+      
+    } catch (error) {
+       console.error("Backend Error:", error);
+       // FALLBACK TO CLIENT-SIDE DEMO
+       const code = Math.floor(100000 + Math.random() * 900000).toString();
+       setGeneratedCode(code);
+       setVerificationStep(true);
+       // We use a specific message here to let the user know why
+       alert("Could not connect to backend server. Falling back to Demo Mode.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Restrict to numbers only
+    const val = e.target.value.replace(/[^0-9]/g, '');
+    if (val.length <= 6) setInputCode(val);
+  };
+
+  const handleResendCode = async () => {
+    setIsLoading(true);
+    // Simple resend logic reusing initiate
+    try {
+        await initiateRegistration({ preventDefault: () => {} } as React.FormEvent);
+    } catch(e) {
+        console.error(e);
+    }
+    setIsLoading(false);
+  };
+
+  const completeRegistration = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+        // ATTEMPT BACKEND VERIFICATION
+        const response = await fetch('http://localhost:5000/api/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: formData.email, code: inputCode })
+        });
+        
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            alert("Registration Successful! Welcome to Nebula Forge.");
+            onLogin(data.user);
+        } else {
+            // Check fallback for Demo Mode
+            if (inputCode === generatedCode) {
+                const mockUser: User = {
+                    id: 'u_' + Math.random(),
+                    name: formData.name,
+                    email: formData.email,
+                    role: 'user',
+                    isFirstTime: true 
+                };
+                alert("Registration Successful! (Demo Mode)");
+                onLogin(mockUser);
+            } else {
+                alert(data.message || "Invalid verification code.");
+            }
+        }
+    } catch (error) {
+        // Fallback for Demo Mode if backend fails
+        if (inputCode === generatedCode) {
+             const mockUser: User = {
+                 id: 'u_' + Math.random(),
+                 name: formData.name,
+                 email: formData.email,
+                 role: 'user',
+                 isFirstTime: true 
+             };
+             alert("Registration Successful! (Demo Mode)");
+             onLogin(mockUser);
+        } else {
+             alert("Invalid verification code (Demo).");
+        }
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen pt-20 flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-slate-900 p-8 rounded-2xl border border-white/10 shadow-2xl">
-        <h2 className="text-3xl font-bold text-white mb-2 text-center">{isRegister ? 'Create Account' : 'Welcome Back'}</h2>
-        <p className="text-slate-400 text-center mb-8">{isRegister ? 'Join Nebula Forge & Get 15% Off' : 'Access your saved builds'}</p>
+        <h2 className="text-3xl font-bold text-white mb-2 text-center">
+            {verificationStep ? 'Verify Email' : (isRegister ? 'Create Account' : 'Welcome Back')}
+        </h2>
+        <p className="text-slate-400 text-center mb-8">
+            {verificationStep 
+                ? `Enter the code sent to ${formData.email}` 
+                : (isRegister ? 'Join Nebula Forge & Get 15% Off' : 'Access your saved builds')}
+        </p>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {isRegister && (
-            <input 
-              type="text" 
-              placeholder="Full Name" 
-              className="w-full p-3 bg-slate-800 border border-slate-700 rounded text-white focus:border-cyan-500 outline-none" 
-              value={formData.name}
-              onChange={e => setFormData({...formData, name: e.target.value})}
-              required
-            />
-          )}
-          <input 
-            type="email" 
-            placeholder="Email Address" 
-            className="w-full p-3 bg-slate-800 border border-slate-700 rounded text-white focus:border-cyan-500 outline-none" 
-            value={formData.email}
-            onChange={e => setFormData({...formData, email: e.target.value})}
-            required
-          />
-          <input 
-            type="password" 
-            placeholder="Password" 
-            className="w-full p-3 bg-slate-800 border border-slate-700 rounded text-white focus:border-cyan-500 outline-none" 
-            value={formData.password}
-            onChange={e => setFormData({...formData, password: e.target.value})}
-            required
-          />
-          
-          <button className="w-full py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold rounded hover:shadow-lg hover:shadow-cyan-500/20 transition-all">
-            {isRegister ? 'Register & Claim Discount' : 'Login'}
-          </button>
-        </form>
+        {/* Helper for Demo Mode / Dev Mode visibility */}
+        {verificationStep && generatedCode && (
+            <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-lg text-yellow-200 text-sm">
+                <p className="font-bold flex items-center mb-1"><AlertTriangle className="w-4 h-4 mr-2"/> CHECK YOUR EMAIL</p>
+                <p>If you haven't set up the backend server yet, use this code:</p>
+                <p className="text-xl font-mono font-bold text-center mt-2 tracking-widest text-white bg-white/10 p-2 rounded">{generatedCode}</p>
+            </div>
+        )}
 
-        <div className="mt-6 text-center text-sm">
-          <button onClick={() => setIsRegister(!isRegister)} className="text-slate-400 hover:text-white underline">
-            {isRegister ? 'Already have an account? Login' : 'New here? Register'}
-          </button>
-        </div>
+        {verificationStep ? (
+           // VERIFICATION FORM
+           <form onSubmit={completeRegistration} className="space-y-4">
+             <div className="flex flex-col space-y-2">
+                <input 
+                  type="text" 
+                  placeholder="6-Digit Code" 
+                  className="w-full p-3 bg-slate-800 border border-slate-700 rounded text-white focus:border-cyan-500 outline-none text-center text-2xl tracking-widest font-mono" 
+                  value={inputCode}
+                  onChange={handleCodeChange}
+                  maxLength={6}
+                  required
+                  autoFocus
+                />
+             </div>
+             <button disabled={isLoading} className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold rounded hover:shadow-lg hover:shadow-green-500/20 transition-all flex items-center justify-center disabled:opacity-50">
+                {isLoading ? <Loader2 className="animate-spin mr-2" /> : <CheckCircle className="mr-2 w-5 h-5" />} 
+                {isLoading ? 'Verifying...' : 'Verify & Register'}
+             </button>
+             
+             <div className="flex justify-between text-sm mt-4">
+               <button 
+                  type="button" 
+                  onClick={() => setVerificationStep(false)} 
+                  className="text-slate-400 hover:text-white"
+               >
+                  &larr; Back
+               </button>
+               <button 
+                  type="button" 
+                  onClick={handleResendCode}
+                  className="text-cyan-400 hover:text-cyan-300"
+               >
+                  Resend Code
+               </button>
+             </div>
+           </form>
+        ) : (
+           // LOGIN / REGISTER FORM
+           <form onSubmit={isRegister ? initiateRegistration : handleLogin} className="space-y-4">
+             {isRegister && (
+               <input 
+                 type="text" 
+                 placeholder="Full Name" 
+                 className="w-full p-3 bg-slate-800 border border-slate-700 rounded text-white focus:border-cyan-500 outline-none" 
+                 value={formData.name}
+                 onChange={e => setFormData({...formData, name: e.target.value})}
+                 required
+               />
+             )}
+             <input 
+               type="email" 
+               placeholder="Email Address" 
+               className="w-full p-3 bg-slate-800 border border-slate-700 rounded text-white focus:border-cyan-500 outline-none" 
+               value={formData.email}
+               onChange={e => setFormData({...formData, email: e.target.value})}
+               required
+             />
+             <input 
+               type="password" 
+               placeholder="Password" 
+               className="w-full p-3 bg-slate-800 border border-slate-700 rounded text-white focus:border-cyan-500 outline-none" 
+               value={formData.password}
+               onChange={e => setFormData({...formData, password: e.target.value})}
+               required
+             />
+             
+             <button disabled={isLoading} className="w-full py-3 bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-bold rounded hover:shadow-lg hover:shadow-cyan-500/20 transition-all flex items-center justify-center disabled:opacity-50">
+               {isRegister ? (
+                 <>{isLoading ? <Loader2 className="animate-spin mr-2" /> : 'Next'} {isLoading ? 'Sending...' : <ChevronRight className="ml-2 w-4 h-4" />}</>
+               ) : (
+                 'Login'
+               )}
+             </button>
+           </form>
+        )}
+
+        {!verificationStep && (
+            <div className="mt-6 text-center text-sm">
+            <button onClick={() => { setIsRegister(!isRegister); setVerificationStep(false); }} className="text-slate-400 hover:text-white underline">
+                {isRegister ? 'Already have an account? Login' : 'New here? Register'}
+            </button>
+            </div>
+        )}
       </div>
     </div>
   );
