@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { 
   Cpu, 
   Monitor, 
@@ -22,9 +25,15 @@ import {
   Mail,
   AlertTriangle,
   Loader2,
-  WifiOff
+  WifiOff,
+  ArrowRight
 } from 'lucide-react';
 import { Part, User, GalleryItem, BuilderJob } from './types';
+
+// Register GSAP plugins
+gsap.registerPlugin(useGSAP, ScrollTrigger);
+
+const API_URL = 'http://localhost:5000/api';
 
 // --- MOCK DATA ---
 
@@ -76,6 +85,7 @@ const CATEGORY_INFO: Record<string, string> = {
 const Navbar: React.FC<{ user: User | null; onLogout: () => void }> = ({ user, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navRef = useRef<HTMLDivElement>(null);
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -85,12 +95,22 @@ const Navbar: React.FC<{ user: User | null; onLogout: () => void }> = ({ user, o
     { name: 'Builders', path: '/builders' },
   ];
 
+  useGSAP(() => {
+    // Initial Nav Entry
+    gsap.from(navRef.current, {
+      y: -100,
+      opacity: 0,
+      duration: 1,
+      ease: "power3.out"
+    });
+  }, []);
+
   return (
-    <nav className="fixed top-0 w-full z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-md">
+    <nav ref={navRef} className="fixed top-0 w-full z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center space-x-2">
-            <Zap className="h-8 w-8 text-cyan-400" />
+          <Link to="/" className="flex items-center space-x-2 group">
+            <Zap className="h-8 w-8 text-cyan-400 group-hover:scale-110 transition-transform duration-300" />
             <span className="text-2xl font-bold tracking-wider text-white">NEBULA<span className="text-cyan-400">FORGE</span></span>
           </Link>
           
@@ -100,11 +120,12 @@ const Navbar: React.FC<{ user: User | null; onLogout: () => void }> = ({ user, o
                 <Link
                   key={link.name}
                   to={link.path}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                  className={`relative px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 group ${
                     location.pathname === link.path ? 'text-cyan-400' : 'text-slate-300 hover:text-white'
                   }`}
                 >
                   {link.name}
+                  <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-cyan-400 transform origin-left transition-transform duration-300 ${location.pathname === link.path ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
                 </Link>
               ))}
             </div>
@@ -119,8 +140,13 @@ const Navbar: React.FC<{ user: User | null; onLogout: () => void }> = ({ user, o
                 <button onClick={onLogout} className="text-sm text-red-400 hover:text-red-300">Logout</button>
               </div>
             ) : (
-              <Link to="/login" className="px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/20 transition-all">
-                Login / Join
+              <Link 
+                to="/login" 
+                className="relative px-4 py-2 rounded-full overflow-hidden group border border-cyan-500/50 text-cyan-400"
+              >
+                <div className="absolute inset-0 w-full h-full bg-cyan-500/10 group-hover:bg-cyan-500/20 transition-all"></div>
+                <div className="absolute inset-0 w-0 bg-cyan-500/20 group-hover:w-full transition-all duration-300 ease-out"></div>
+                <span className="relative z-10">Login / Join</span>
               </Link>
             )}
           </div>
@@ -159,45 +185,82 @@ const Navbar: React.FC<{ user: User | null; onLogout: () => void }> = ({ user, o
 
 // 2. Hero Section
 const Hero = () => {
+  const containerRef = useRef(null);
+  const titleRef = useRef(null);
+  const textRef = useRef(null);
+  const btnRef = useRef(null);
+
+  useGSAP(() => {
+    const tl = gsap.timeline();
+
+    tl.from(titleRef.current, {
+      y: 100,
+      opacity: 0,
+      duration: 1.2,
+      ease: "power4.out",
+      skewY: 7
+    })
+    .from(textRef.current, {
+      y: 20,
+      opacity: 0,
+      duration: 0.8,
+      ease: "power2.out"
+    }, "-=0.5")
+    .from(btnRef.current, {
+      scale: 0.8,
+      opacity: 0,
+      duration: 0.5,
+      ease: "back.out(1.7)"
+    }, "-=0.3");
+
+    // Subtle parallax on mouse move
+    const handleMouseMove = (e: MouseEvent) => {
+      const { clientX, clientY } = e;
+      const x = (clientX / window.innerWidth - 0.5) * 20;
+      const y = (clientY / window.innerHeight - 0.5) * 20;
+      
+      gsap.to(containerRef.current, {
+        backgroundPosition: `calc(50% + ${x}px) calc(50% + ${y}px)`,
+        duration: 0.5,
+        ease: "power1.out"
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+
+  }, { scope: containerRef });
+
   return (
-    <div className="relative h-screen flex items-center justify-center overflow-hidden bg-[url('https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=2574&auto=format&fit=crop')] bg-cover bg-center">
+    <div ref={containerRef} className="relative h-screen flex items-center justify-center overflow-hidden bg-[url('https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=2574&auto=format&fit=crop')] bg-cover bg-center">
       <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"></div>
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
       
       <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
-        <motion.h1 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 mb-6 drop-shadow-2xl"
+        <h1 
+          ref={titleRef}
+          className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 mb-6 drop-shadow-2xl leading-tight"
         >
           ARCHITECT YOUR REALITY
-        </motion.h1>
+        </h1>
         
-        <motion.p 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.8 }}
-          className="text-xl md:text-2xl text-slate-300 mb-10 font-light tracking-wide"
+        <p 
+          ref={textRef}
+          className="text-xl md:text-2xl text-slate-300 mb-10 font-light tracking-wide max-w-2xl mx-auto"
         >
           Singapore's Premium Custom PC Ecosystem. <br />
           Designed by you. Built by artisans. Delivered to your doorstep.
-        </motion.p>
+        </p>
         
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.8 }}
-          className="flex flex-col sm:flex-row justify-center gap-6"
-        >
-          <Link to="/customize" className="group relative px-8 py-4 bg-cyan-500 text-slate-950 font-bold rounded-none skew-x-[-10deg] hover:bg-cyan-400 transition-all">
+        <div ref={btnRef} className="flex flex-col sm:flex-row justify-center gap-6">
+          <Link to="/customize" className="group relative px-8 py-4 bg-cyan-500 text-slate-950 font-bold rounded-none skew-x-[-10deg] hover:bg-cyan-400 transition-all overflow-hidden">
+            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-[20deg]"></div>
             <span className="block skew-x-[10deg]">CUSTOMIZE RIG</span>
-            <div className="absolute inset-0 border border-white/20 -m-1 group-hover:m-0 transition-all duration-300"></div>
           </Link>
           <Link to="/gallery" className="group relative px-8 py-4 bg-transparent border border-white/30 text-white font-bold rounded-none skew-x-[-10deg] hover:bg-white/10 transition-all">
             <span className="block skew-x-[10deg]">VIEW SHOWCASE</span>
           </Link>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
@@ -205,6 +268,25 @@ const Hero = () => {
 
 // 3. Why Choose Us / How It Works
 const InfoSection = () => {
+  const sectionRef = useRef(null);
+  
+  useGSAP(() => {
+    const cards = gsap.utils.toArray('.info-card');
+    
+    // Animate cards on scroll
+    gsap.from(cards, {
+      y: 50,
+      opacity: 0,
+      duration: 0.8,
+      stagger: 0.2,
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top 80%",
+      },
+      ease: "power2.out"
+    });
+  }, { scope: sectionRef });
+
   const steps = [
     { title: 'Visualize', desc: 'Drag & drop premium components into your chassis.', icon: <Monitor className="w-10 h-10 text-cyan-400" /> },
     { title: 'Engineer', desc: 'Verified local builders assemble your rig with precision.', icon: <Wrench className="w-10 h-10 text-purple-500" /> },
@@ -212,8 +294,14 @@ const InfoSection = () => {
   ];
 
   return (
-    <section className="py-24 bg-slate-950">
-      <div className="max-w-7xl mx-auto px-4">
+    <section ref={sectionRef} className="py-24 bg-slate-950 relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+         <div className="absolute top-10 right-10 w-96 h-96 bg-purple-600 rounded-full blur-[100px]"></div>
+         <div className="absolute bottom-10 left-10 w-80 h-80 bg-cyan-600 rounded-full blur-[100px]"></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 relative z-10">
         <div className="grid md:grid-cols-2 gap-16 items-center mb-24">
           <div>
             <h2 className="text-4xl font-bold text-white mb-6">BEYOND PRE-BUILTS</h2>
@@ -227,8 +315,8 @@ const InfoSection = () => {
               <li className="flex items-center"><CheckCircle className="w-5 h-5 mr-3 text-cyan-500" /> 15% Cheaper than retail stores</li>
             </ul>
           </div>
-          <div className="relative">
-            <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-xl opacity-20 blur-xl"></div>
+          <div className="relative group">
+            <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-xl opacity-20 blur-xl group-hover:opacity-40 transition-opacity duration-700"></div>
             <img src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?q=80&w=2642&auto=format&fit=crop" alt="PC Interior" className="relative rounded-xl shadow-2xl border border-white/10" />
           </div>
         </div>
@@ -236,7 +324,7 @@ const InfoSection = () => {
         <h2 className="text-3xl font-bold text-center text-white mb-12">THE PROCESS</h2>
         <div className="grid md:grid-cols-3 gap-8">
           {steps.map((step, idx) => (
-            <div key={idx} className="bg-slate-900/50 p-8 rounded-xl border border-white/5 hover:border-cyan-500/50 transition-colors">
+            <div key={idx} className="info-card bg-slate-900/50 p-8 rounded-xl border border-white/5 hover:border-cyan-500/50 transition-colors hover:bg-slate-900/80">
               <div className="mb-6">{step.icon}</div>
               <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
               <p className="text-slate-400">{step.desc}</p>
@@ -314,6 +402,97 @@ const Configurator: React.FC<{ user: User | null }> = ({ user }) => {
   // Helper for lighting status
   const isPowered = !!selectedParts.psu;
 
+  // VISUALIZER GSAP REFERENCES
+  const visualizerRef = useRef<HTMLDivElement>(null);
+  
+  // Animate chassis appearance
+  useGSAP(() => {
+    if (selectedParts.chassis) {
+      gsap.fromTo(".chassis-frame", 
+        { scale: 0.9, opacity: 0 }, 
+        { scale: 1, opacity: 1, duration: 0.8, ease: "back.out(1.2)" }
+      );
+    }
+  }, [selectedParts.chassis]);
+
+  // --- COMPONENT ANIMATIONS ---
+  
+  // 1. Motherboard: Fades in with a "tech" scale effect
+  useGSAP(() => {
+    if (selectedParts.motherboard && selectedParts.chassis) {
+      gsap.fromTo(".mb-part", 
+        { opacity: 0, scale: 1.1, filter: "blur(10px)" }, 
+        { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.8, ease: "power2.out" }
+      );
+    }
+  }, [selectedParts.motherboard]);
+
+  // 2. CPU: Drops from top with precision snap
+  useGSAP(() => {
+    if (selectedParts.cpu && selectedParts.chassis) {
+        const tl = gsap.timeline();
+        tl.fromTo(".cpu-part", 
+          { y: -300, opacity: 0, scale: 2 },
+          { y: 0, opacity: 1, scale: 1, duration: 0.8, ease: "elastic.out(1, 0.5)" }
+        )
+        .to(".cpu-light", { opacity: 1, duration: 0.1, yoyo: true, repeat: 3, ease: "power1.inOut" }, "-=0.2");
+    }
+  }, [selectedParts.cpu]);
+
+  // 3. RAM: Slides in diagonally and snaps
+  useGSAP(() => {
+    if (selectedParts.ram && selectedParts.chassis) {
+      gsap.fromTo(".ram-part",
+        { x: 50, y: -50, opacity: 0 },
+        { x: 0, y: 0, opacity: 1, duration: 0.6, ease: "back.out(2)" }
+      );
+    }
+  }, [selectedParts.ram]);
+
+  // 4. GPU: Slides in from side with "heavy" inertia
+  useGSAP(() => {
+    if (selectedParts.gpu && selectedParts.chassis) {
+      gsap.fromTo(".gpu-part",
+        { x: -400, opacity: 0, skewX: -10 },
+        { x: 0, opacity: 1, skewX: 0, duration: 0.9, ease: "power4.out" }
+      );
+    }
+  }, [selectedParts.gpu]);
+
+  // 5. PSU: Lifts up from bottom into the shroud
+  useGSAP(() => {
+    if (selectedParts.psu && selectedParts.chassis) {
+       gsap.fromTo(".psu-part",
+         { y: 150, opacity: 0 },
+         { y: 0, opacity: 1, duration: 0.8, ease: "circ.out" }
+       );
+    }
+  }, [selectedParts.psu]);
+
+  // 6. Storage: Staggered slide in
+  useGSAP(() => {
+      if (selectedParts.storage.length > 0 && selectedParts.chassis) {
+          gsap.fromTo(".storage-part",
+             { x: 100, opacity: 0 },
+             { x: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: "back.out(1.2)" }
+          );
+      }
+  }, [selectedParts.storage]); // Re-run when storage array changes
+
+  // Ambient Loop for powered system
+  useGSAP(() => {
+    if (isPowered) {
+       gsap.to(".power-glow", {
+          opacity: 0.6,
+          duration: 2,
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut"
+       });
+    }
+  }, [isPowered]);
+
+
   return (
     <div className="pt-20 pb-12 min-h-screen bg-slate-950 flex flex-col">
       <div className="flex-1 max-w-7xl mx-auto w-full px-4 flex flex-col lg:flex-row gap-8">
@@ -329,26 +508,43 @@ const Configurator: React.FC<{ user: User | null }> = ({ user }) => {
             className="flex overflow-x-auto space-x-2 pb-4 mb-4 scrollbar-thin"
             onScroll={() => setTooltip(null)} // Hide tooltip on scroll
           >
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                onMouseEnter={(e) => {
-                   const rect = e.currentTarget.getBoundingClientRect();
-                   setTooltip({
-                     text: CATEGORY_INFO[cat] || '',
-                     x: rect.left + rect.width / 2,
-                     y: rect.top
-                   });
-                }}
-                onMouseLeave={() => setTooltip(null)}
-                className={`px-4 py-2 rounded-lg text-sm font-bold uppercase whitespace-nowrap transition-all ${
-                  activeCategory === cat ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-500/30' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+            {categories.map(cat => {
+              const selection = selectedParts[cat as keyof typeof selectedParts];
+              const isFilled = Array.isArray(selection) ? selection.length > 0 : !!selection;
+              const isActive = activeCategory === cat;
+
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  onMouseEnter={(e) => {
+                     const rect = e.currentTarget.getBoundingClientRect();
+                     setTooltip({
+                       text: CATEGORY_INFO[cat] || '',
+                       x: rect.left + rect.width / 2,
+                       y: rect.top
+                     });
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
+                  className={`px-4 py-2 rounded-lg text-sm font-bold uppercase whitespace-nowrap transition-all flex items-center gap-2 border ${
+                    isActive 
+                      ? 'bg-cyan-600 text-white border-cyan-500 shadow-lg shadow-cyan-500/30' 
+                      : isFilled
+                        ? 'bg-slate-800 text-cyan-400 border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.15)]'
+                        : 'bg-slate-800 text-slate-400 border-transparent hover:bg-slate-700'
+                  }`}
+                >
+                  {cat}
+                  {isFilled && (
+                    <motion.div 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white' : 'bg-cyan-400'} shadow-[0_0_5px_currentColor]`}
+                    />
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           {/* Parts List */}
@@ -359,13 +555,13 @@ const Configurator: React.FC<{ user: User | null }> = ({ user }) => {
                 <div 
                     key={part.id}
                     onClick={() => handleSelect(part)}
-                    className={`p-4 rounded-lg border cursor-pointer transition-all flex items-center space-x-4 ${
+                    className={`p-4 rounded-lg border cursor-pointer transition-all flex items-center space-x-4 group ${
                     selected
                         ? 'border-cyan-500 bg-cyan-500/10' 
                         : 'border-white/5 bg-slate-800/50 hover:border-white/20'
                     }`}
                 >
-                    <img src={part.image} alt={part.name} className="w-16 h-16 object-cover rounded bg-slate-700" />
+                    <img src={part.image} alt={part.name} className="w-16 h-16 object-cover rounded bg-slate-700 group-hover:scale-105 transition-transform" />
                     <div className="flex-1">
                     <h4 className="text-white font-medium">{part.name}</h4>
                     <p className="text-cyan-400 font-bold">${part.price}</p>
@@ -378,58 +574,30 @@ const Configurator: React.FC<{ user: User | null }> = ({ user }) => {
         </div>
 
         {/* Center: Visualization */}
-        <div className="w-full lg:w-1/3 relative flex flex-col items-center justify-center bg-slate-900/40 rounded-xl border border-white/5 p-8 overflow-hidden min-h-[500px]">
+        <div ref={visualizerRef} className="w-full lg:w-1/3 relative flex flex-col items-center justify-center bg-slate-900/40 rounded-xl border border-white/5 p-8 overflow-hidden min-h-[500px]">
           {/* Background Grid Effect */}
           <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
           
           <AnimatePresence mode="wait">
              {selectedParts.chassis ? (
-               <motion.div 
-                key={selectedParts.chassis.id}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                className="relative w-72 h-[32rem] border-4 border-slate-700 bg-slate-800/90 rounded-xl flex flex-col items-center shadow-2xl shadow-cyan-900/20 overflow-hidden"
+               <div 
+                key="chassis-container"
+                className="chassis-frame relative w-72 h-[32rem] border-4 border-slate-700 bg-slate-800/90 rounded-xl flex flex-col items-center shadow-2xl shadow-cyan-900/20 overflow-hidden"
                >
                   {/* --- Dynamic Lighting & AO Layer --- */}
                   <div className="absolute inset-0 pointer-events-none z-0">
-                    {/* Base Ambience */}
                     <div className="absolute inset-0 bg-slate-900/80" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_40%,rgba(0,0,0,0.8)_100%)]" /> {/* Darkened edge for depth */}
                     
-                    {/* Global Ambient Occlusion (Corners Vignette) */}
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_40%,rgba(0,0,0,0.6)_100%)]" />
+                    {/* CPU Ambient Glow */}
+                    {selectedParts.cpu && (
+                        <div className={`cpu-light absolute top-[20%] left-1/2 -translate-x-1/2 w-48 h-48 bg-cyan-400 blur-[80px] rounded-full mix-blend-screen opacity-20 ${isPowered ? 'power-glow' : ''}`}></div>
+                    )}
                     
-                    {/* Motherboard Backlight (Blue) */}
-                    <motion.div 
-                        animate={{ opacity: selectedParts.motherboard ? 0.3 : 0 }}
-                        transition={{ duration: 1 }}
-                        className="absolute inset-0 bg-blue-600 mix-blend-overlay blur-sm"
-                    />
-
-                    {/* CPU Core Glow (Cyan) - Pulses if PSU is present */}
-                    <motion.div 
-                        animate={{ 
-                            opacity: selectedParts.cpu ? (isPowered ? 0.5 : 0.2) : 0,
-                            scale: selectedParts.cpu && isPowered ? [1, 1.2, 1] : 1
-                        }}
-                        transition={{
-                            opacity: { duration: 0.5 },
-                            scale: { duration: 3, repeat: Infinity, ease: "easeInOut" }
-                        }}
-                        className="absolute top-[20%] left-1/2 -translate-x-1/2 w-48 h-48 bg-cyan-400 blur-[80px] rounded-full mix-blend-screen"
-                    />
-
-                    {/* GPU Underglow (Green) */}
-                    <motion.div 
-                        animate={{ opacity: selectedParts.gpu ? (isPowered ? 0.4 : 0.2) : 0 }}
-                        className="absolute top-[45%] left-0 right-0 h-32 bg-green-500 blur-[60px] mix-blend-screen"
-                    />
-
-                    {/* RAM Accent (Red/Purple) */}
-                    <motion.div 
-                        animate={{ opacity: selectedParts.ram ? 0.3 : 0 }}
-                        className="absolute top-[20%] right-[10%] w-24 h-48 bg-purple-500 blur-[50px] rotate-12 mix-blend-screen"
-                    />
+                    {/* GPU Ambient Glow */}
+                    {selectedParts.gpu && (
+                        <div className={`absolute top-[45%] left-0 right-0 h-32 bg-green-500 blur-[60px] mix-blend-screen opacity-20 ${isPowered ? 'power-glow' : ''}`}></div>
+                    )}
                   </div>
 
                   {/* Chassis Image Background (faint) */}
@@ -437,187 +605,113 @@ const Configurator: React.FC<{ user: User | null }> = ({ user }) => {
                   
                   <div className="absolute top-0 w-full h-full flex flex-col p-4 z-10 gap-2">
                     {/* Top Section: Motherboard Area */}
-                    <div className="relative flex-[2] w-full border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/20 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
-                        {/* Motherboard - Slotted in from back */}
+                    <div className="relative flex-[2] w-full border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/40 shadow-[inset_0_0_40px_rgba(0,0,0,0.9)] overflow-hidden">
+                        {/* Motherboard Backplate/Tray Detail */}
+                        <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-800 to-black pointer-events-none"></div>
+
+                        {/* Motherboard */}
                         {selectedParts.motherboard && (
-                            <motion.img 
-                                key={selectedParts.motherboard.id}
-                                layoutId="mobo"
-                                src={selectedParts.motherboard.image} 
-                                className="absolute inset-2 w-[calc(100%-1rem)] h-[calc(100%-1rem)] object-cover opacity-70 rounded-lg drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]"
-                                initial={{ opacity: 0, scale: 0.8, filter: 'blur(8px)' }} 
-                                animate={{ opacity: 0.7, scale: 1, filter: 'blur(0px)' }}
-                                transition={{ duration: 0.8, ease: "easeOut" }}
-                            />
+                            <div className="mb-part absolute inset-2 z-0 transform perspective-[800px] rotate-x-2">
+                                <img 
+                                    key={selectedParts.motherboard.id}
+                                    src={selectedParts.motherboard.image} 
+                                    className="w-full h-full object-cover opacity-70 rounded-lg drop-shadow-[0_20px_30px_rgba(0,0,0,0.9)] grayscale-[0.2]" 
+                                />
+                                {/* AO Overlay for Motherboard - deepened */}
+                                <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-black/80 rounded-lg mix-blend-overlay"></div>
+                                <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] rounded-lg pointer-events-none"></div>
+                            </div>
                         )}
 
-                        {/* CPU (Center of Mobo) - Drop from top */}
+                        {/* CPU */}
                         {selectedParts.cpu && (
-                            <motion.div 
-                                key={selectedParts.cpu.id}
-                                initial={{ y: -120, opacity: 0, scale: 2 }} 
-                                animate={{ y: 0, opacity: 1, scale: 1 }}
-                                exit={{ y: -50, opacity: 0 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 20, mass: 1.2 }}
-                                className="absolute top-[25%] left-1/2 -translate-x-1/2 w-16 h-16 bg-slate-900 border border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.5),0_10px_20px_rgba(0,0,0,0.8)] z-20 flex items-center justify-center rounded overflow-hidden"
-                            >
-                                <img src={selectedParts.cpu.image} className="w-full h-full object-cover opacity-80" />
-                                {/* Ambient Occlusion inner shadow */}
-                                <div className="absolute inset-0 shadow-[inset_0_0_10px_rgba(0,0,0,0.8)] pointer-events-none"></div>
-                                <div className="absolute bottom-0 w-full text-center text-[7px] text-cyan-400 bg-black/70 py-0.5">CPU</div>
-                                <motion.div 
-                                    initial={{ opacity: 1 }}
-                                    animate={{ opacity: 0 }}
-                                    transition={{ duration: 0.5, delay: 0.2 }}
-                                    className="absolute inset-0 bg-cyan-400 mix-blend-overlay"
-                                />
-                            </motion.div>
+                            <div className="cpu-part absolute top-[25%] left-1/2 -translate-x-1/2 w-20 h-20 bg-slate-900 border border-cyan-500/50 shadow-[0_0_30px_rgba(0,0,0,0.8),inset_0_0_10px_rgba(0,0,0,1)] z-20 flex items-center justify-center rounded-lg overflow-hidden group">
+                                <img src={selectedParts.cpu.image} className="w-full h-full object-cover opacity-90 group-hover:scale-110 transition-transform duration-500" />
+                                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70"></div> {/* Stronger Self-shadow */}
+                                <div className="absolute inset-0 bg-cyan-400 mix-blend-overlay opacity-20 group-hover:opacity-40 transition-opacity"></div>
+                                {/* Pin Highlight */}
+                                <div className="absolute top-0 right-0 w-3 h-3 bg-cyan-400 blur-sm opacity-50"></div>
+                            </div>
                         )}
 
-                        {/* RAM (Right of CPU) - Angled insertion */}
+                        {/* RAM */}
                         {selectedParts.ram && (
-                            <motion.div 
-                                key={selectedParts.ram.id}
-                                initial={{ y: -80, opacity: 0, rotateX: 45 }} 
-                                animate={{ y: 0, opacity: 1, rotateX: 0 }}
-                                exit={{ y: -20, opacity: 0 }}
-                                transition={{ type: "spring", stiffness: 400, damping: 25, delay: 0.1 }}
-                                className="absolute top-[25%] right-[15%] w-6 h-[40%] bg-red-500/10 border border-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5),5px_5px_15px_rgba(0,0,0,0.8)] z-20 flex flex-col overflow-hidden rounded"
-                            >
+                            <div className="ram-part absolute top-[20%] right-[12%] w-8 h-[50%] bg-slate-900/80 border-r-2 border-slate-600 shadow-[-10px_10px_20px_rgba(0,0,0,0.9)] z-20 flex flex-col overflow-hidden rounded transform skew-y-12 origin-top-right">
                                 <img src={selectedParts.ram.image} className="w-full h-full object-cover opacity-80" />
-                                <motion.div 
-                                    initial={{ opacity: 1 }}
-                                    animate={{ opacity: 0 }}
-                                    transition={{ duration: 0.5, delay: 0.3 }}
-                                    className="absolute inset-0 bg-red-500 mix-blend-overlay"
-                                />
-                            </motion.div>
+                                <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent"></div> {/* Side shadow for depth */}
+                                <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent mix-blend-overlay"></div>
+                            </div>
                         )}
                     </div>
 
-                    {/* Middle Section: GPU Area - Slide in from side */}
-                    <div className="relative h-24 w-full border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/20 perspective-[1000px] shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
+                    {/* Middle Section: GPU Area */}
+                    <div className="relative h-28 w-full border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/50 perspective-[1200px] shadow-[inset_0_15px_30px_rgba(0,0,0,0.8)] overflow-visible z-20">
+                         {/* GPU Slot Highlight */}
+                         <div className="absolute bottom-2 left-2 right-2 h-1 bg-slate-800 shadow-[0_0_10px_rgba(0,255,255,0.1)]"></div>
+                         
                         {selectedParts.gpu ? (
-                            <motion.div 
-                                key={selectedParts.gpu.id}
-                                initial={{ x: -250, opacity: 0, rotateY: -10 }} 
-                                animate={{ x: 0, opacity: 1, rotateY: 0 }}
-                                whileHover={{ 
-                                  scale: 1.02, 
-                                  boxShadow: "0 0 25px rgba(74, 222, 128, 0.6), 0 0 50px rgba(74, 222, 128, 0.2)",
-                                  borderColor: "rgba(74, 222, 128, 1)"
-                                }}
-                                exit={{ x: -100, opacity: 0 }}
-                                transition={{ type: "spring", stiffness: 150, damping: 18, mass: 1.2 }}
-                                className="relative w-[95%] h-20 bg-slate-800 border border-green-500 rounded flex items-center shadow-[0_0_20px_rgba(34,197,94,0.3),0_15px_30px_rgba(0,0,0,0.9)] overflow-hidden z-10 cursor-pointer"
-                            >
-                                <img src={selectedParts.gpu.image} className="w-full h-full object-cover opacity-90" />
-                                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60 pointer-events-none"></div>
-                                <div className="absolute bottom-1 right-1 text-[9px] text-green-400 font-bold bg-black/60 px-2 rounded backdrop-blur-sm">GPU INSTALLED</div>
-                                <motion.div 
-                                    initial={{ opacity: 1 }}
-                                    animate={{ opacity: 0 }}
-                                    transition={{ duration: 0.5, delay: 0.2 }}
-                                    className="absolute inset-0 bg-green-400 mix-blend-overlay"
-                                />
-                            </motion.div>
-                        ) : <span className="text-xs text-slate-600 font-mono tracking-widest">PCIE SLOT</span>}
+                            <div className="gpu-part relative w-[98%] h-24 bg-slate-800 border-t border-white/10 border-b-4 border-b-black/80 rounded flex items-center shadow-[0_30px_50px_rgba(0,0,0,1)] overflow-hidden z-20 cursor-pointer transform hover:scale-[1.01] transition-transform origin-center">
+                                <img src={selectedParts.gpu.image} className="w-full h-full object-cover opacity-95" />
+                                <div className="absolute bottom-2 right-2 text-[10px] text-green-400 font-bold bg-black/90 px-3 py-1 rounded backdrop-blur-md border border-green-500/30 shadow-lg">RTX ON</div>
+                                <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-black/90 pointer-events-none"></div> {/* Heavy grounding gradient */}
+                                <div className="absolute top-0 w-full h-[1px] bg-white/30"></div> {/* Top edge light */}
+                            </div>
+                        ) : <span className="text-xs text-slate-600 font-mono tracking-widest opacity-40">PCIE X16 SLOT</span>}
                     </div>
 
                     {/* Bottom Section: PSU & Storage */}
-                    <div className="flex h-20 gap-2 w-full">
-                        {/* PSU - Slide from side */}
-                        <div className="flex-[2] border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/20 overflow-hidden relative group shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
+                    <div className="flex h-24 gap-3 w-full z-10">
+                        {/* PSU */}
+                        <div className="flex-[2] border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/60 overflow-hidden relative group shadow-[inset_0_10px_30px_rgba(0,0,0,0.9)]">
                             {selectedParts.psu ? (
-                                <motion.div 
-                                    key={selectedParts.psu.id}
-                                    className="w-full h-full relative"
-                                    initial={{ x: -150, opacity: 0 }}
-                                    animate={{ x: 0, opacity: 1 }}
-                                    exit={{ x: -100, opacity: 0 }}
-                                    transition={{ type: "spring", stiffness: 140, damping: 20 }}
-                                >
-                                    <img 
-                                        src={selectedParts.psu.image} 
-                                        className="w-full h-full object-cover opacity-80"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent pointer-events-none"></div>
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <span className="text-[10px] font-bold text-white">POWER</span>
+                                <div className="psu-part w-full h-full relative">
+                                    <img src={selectedParts.psu.image} className="w-full h-full object-cover opacity-60 grayscale-[0.3]" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div> {/* Deep recess feel */}
+                                    <div className="absolute inset-0 shadow-[inset_0_0_20px_black]"></div>
+                                    <div className="absolute bottom-2 left-4">
+                                        <div className="flex items-center space-x-2">
+                                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                            <span className="text-[10px] font-bold text-slate-300 tracking-widest">ACTIVE</span>
+                                        </div>
                                     </div>
-                                    <motion.div 
-                                      initial={{ opacity: 0.5 }}
-                                      animate={{ opacity: 0 }}
-                                      transition={{ duration: 0.5 }}
-                                      className="absolute inset-0 bg-white/20"
-                                    />
-                                </motion.div>
-                            ) : <span className="text-xs text-slate-600">PSU BAY</span>}
-                        </div>
-                        {/* Storage - Staggered Slot In */}
-                        <div className="flex-1 border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/20 relative overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.5)]">
-                             {selectedParts.storage.length > 0 ? (
-                                <div className="relative w-full h-full flex items-center justify-center">
-                                    <AnimatePresence>
-                                    {selectedParts.storage.map((disk, i) => (
-                                        <motion.div
-                                            key={disk.id}
-                                            className="absolute w-[85%] h-[75%] bg-slate-900 rounded-md border border-cyan-500/30 shadow-[0_10px_20px_rgba(0,0,0,0.8)] overflow-hidden"
-                                            initial={{ x: 200, opacity: 0 }}
-                                            animate={{ 
-                                                x: i * 8, 
-                                                y: i * -6,
-                                                opacity: 1, 
-                                                scale: 1 
-                                            }}
-                                            exit={{ x: 200, opacity: 0 }}
-                                            transition={{ 
-                                                type: "spring", 
-                                                stiffness: 180, 
-                                                damping: 22, 
-                                                delay: i * 0.1 
-                                            }}
-                                            style={{ zIndex: i }}
-                                        >
-                                            <img 
-                                                src={disk.image} 
-                                                className="w-full h-full object-cover opacity-60 hover:opacity-100 transition-opacity duration-300" 
-                                            />
-                                            {/* Tech Overlay Lines */}
-                                            <div className="absolute inset-0 border-t border-white/10"></div>
-                                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-cyan-500/20"></div>
-                                            
-                                            {/* Active Status Light */}
-                                            <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-green-400 rounded-full shadow-[0_0_8px_rgba(74,222,128,0.8)] animate-pulse"></div>
-                                            
-                                            {/* Scanning Shine Effect */}
-                                            <motion.div
-                                                initial={{ x: '-150%' }}
-                                                animate={{ x: '150%' }}
-                                                transition={{ 
-                                                    duration: 1.5, 
-                                                    repeat: Infinity, 
-                                                    repeatDelay: 3, 
-                                                    ease: "easeInOut",
-                                                    delay: i * 0.5 
-                                                }}
-                                                className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent skew-x-[-20deg]"
-                                            />
-                                        </motion.div>
-                                    ))}
-                                    </AnimatePresence>
                                 </div>
-                            ) : <span className="text-xs text-slate-600">DRIVE BAY</span>}
+                            ) : <span className="text-xs text-slate-600 opacity-40">PSU SHROUD</span>}
+                        </div>
+                        {/* Storage */}
+                        <div className="flex-1 border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/60 relative overflow-hidden shadow-[inset_0_10px_20px_rgba(0,0,0,0.8)]">
+                             {selectedParts.storage.length > 0 ? (
+                                <div className="relative w-full h-full flex items-center justify-center perspective-[800px]">
+                                    {selectedParts.storage.map((disk, i) => (
+                                        <div
+                                            key={disk.id}
+                                            className="storage-part absolute w-[80%] h-[70%] bg-slate-800 rounded border border-slate-700 shadow-xl overflow-hidden"
+                                            style={{ 
+                                                left: `${50 + (i * 5)}%`, 
+                                                top: `${50 - (i * 5)}%`, 
+                                                translate: '-50% -50%',
+                                                zIndex: i,
+                                                transform: `rotateY(-15deg) translateZ(${i * 10}px)`,
+                                                boxShadow: '-5px 5px 15px rgba(0,0,0,0.8)'
+                                            }}
+                                        >
+                                            <img src={disk.image} className="w-full h-full object-cover opacity-80" />
+                                            <div className="absolute inset-0 bg-black/50"></div>
+                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500/50"></div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : <span className="text-xs text-slate-600 opacity-40">DRIVE CAGE</span>}
                         </div>
                     </div>
                   </div>
                   
-                  {/* Glass Panel Reflection overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none rounded-xl border border-white/5 z-20"></div>
+                  {/* Glass Panel Reflection overlay - Enhanced */}
+                  <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/5 via-transparent to-white/5 pointer-events-none rounded-xl border border-white/5 z-20"></div>
+                  <div className="absolute top-0 right-0 w-full h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none z-20 transform -skew-y-12 opacity-30"></div>
                   
                   {/* Final Frame Glint/Shadow vignette */}
-                  <div className="absolute inset-0 shadow-[inset_0_0_50px_rgba(0,0,0,0.5)] rounded-xl pointer-events-none z-30"></div>
-               </motion.div>
+                  <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,0.8)] rounded-xl pointer-events-none z-30"></div>
+               </div>
              ) : (
                <div className="text-center text-slate-500">
                  <Box className="w-24 h-24 mx-auto mb-4 opacity-20" />
@@ -685,8 +779,9 @@ const Configurator: React.FC<{ user: User | null }> = ({ user }) => {
                 <span className="text-4xl font-bold text-cyan-400">${finalPrice.toLocaleString()}</span>
               </div>
             </div>
-            <button className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-lg font-bold text-white hover:from-cyan-500 hover:to-blue-500 transition-all shadow-lg shadow-cyan-900/40 uppercase tracking-widest">
-              Checkout Build
+            <button className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-lg font-bold text-white hover:from-cyan-500 hover:to-blue-500 transition-all shadow-lg shadow-cyan-900/40 uppercase tracking-widest relative overflow-hidden group">
+              <span className="relative z-10">Checkout Build</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </button>
             <p className="text-xs text-center text-slate-500">Built by verified experts. Delivered in 3-5 days.</p>
           </div>
@@ -720,22 +815,225 @@ const Configurator: React.FC<{ user: User | null }> = ({ user }) => {
   );
 };
 
+// 5. Auth Component
+const AuthPage: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
+  const [step, setStep] = useState<'init' | 'verify'>('init');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', code: '' });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const runDemoFallback = (action: 'init' | 'verify') => {
+    setError('Backend unreachable. Using Demo Mode.');
+    setTimeout(() => setError(''), 3000);
+    
+    if (action === 'init') {
+      // Simulate sending code
+      setTimeout(() => {
+        setStep('verify');
+        setLoading(false);
+      }, 1500);
+    } else {
+      // Simulate login success
+      setTimeout(() => {
+        onLogin({
+          id: 'demo_user',
+          name: formData.name || 'Demo User',
+          email: formData.email,
+          role: 'user',
+          isFirstTime: true
+        });
+        setLoading(false);
+      }, 1500);
+    }
+  }
+
+  const handleInit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      const res = await fetch(`${API_URL}/register-init`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            name: formData.name, 
+            email: formData.email, 
+            password: formData.password 
+        })
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.message || 'Error');
+      
+      setStep('verify');
+      setLoading(false);
+    } catch (err: any) {
+      console.warn("Backend error:", err);
+      // Check if it is a fetch error (backend down)
+      if (err.message.includes('Failed to fetch') || err.name === 'TypeError') {
+        runDemoFallback('init');
+        return;
+      }
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch(`${API_URL}/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, code: formData.code })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Error');
+      
+      onLogin(data.user);
+    } catch (err: any) {
+      console.warn("Backend error:", err);
+      if (err.message.includes('Failed to fetch') || err.name === 'TypeError') {
+        runDemoFallback('verify');
+        return;
+      }
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 bg-slate-950 bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] bg-cover bg-center">
+      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"></div>
+      
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative z-10 bg-slate-900/90 p-8 rounded-xl border border-white/10 w-full max-w-md shadow-2xl"
+      >
+        <div className="text-center mb-8">
+          <Zap className="w-12 h-12 text-cyan-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">
+            {step === 'init' ? 'Join Nebula Forge' : 'Verify Identity'}
+          </h2>
+          <p className="text-slate-400">
+            {step === 'init' 
+              ? 'Create your artisan profile to start building.' 
+              : `Enter the code sent to ${formData.email}`}
+          </p>
+        </div>
+
+        {error && (
+           <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded flex items-center text-red-400 text-sm">
+             <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" />
+             {error}
+           </div>
+        )}
+
+        {step === 'init' ? (
+          <form onSubmit={handleInit} className="space-y-4">
+            <div>
+               <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Full Name</label>
+               <input 
+                 name="name" 
+                 type="text" 
+                 required
+                 value={formData.name}
+                 onChange={handleChange}
+                 className="w-full bg-slate-800 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-cyan-500 transition-colors"
+                 placeholder="e.g. Kai Tan"
+               />
+            </div>
+            <div>
+               <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Email Address</label>
+               <input 
+                 name="email" 
+                 type="email" 
+                 required
+                 value={formData.email}
+                 onChange={handleChange}
+                 className="w-full bg-slate-800 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-cyan-500 transition-colors"
+                 placeholder="kai@example.com"
+               />
+            </div>
+            <div>
+               <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Password</label>
+               <input 
+                 name="password" 
+                 type="password" 
+                 required
+                 value={formData.password}
+                 onChange={handleChange}
+                 className="w-full bg-slate-800 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-cyan-500 transition-colors"
+                 placeholder="••••••••"
+               />
+            </div>
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full py-3 mt-4 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all flex items-center justify-center"
+            >
+              {loading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Create Account'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerify} className="space-y-4">
+            <div>
+               <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Verification Code</label>
+               <input 
+                 name="code" 
+                 type="text" 
+                 required
+                 value={formData.code}
+                 onChange={handleChange}
+                 className="w-full bg-slate-800 border border-white/10 rounded-lg p-3 text-white text-center text-2xl tracking-[0.5em] font-mono focus:outline-none focus:border-cyan-500 transition-colors"
+                 placeholder="••••••"
+                 maxLength={6}
+               />
+            </div>
+            <button 
+              type="submit" 
+              disabled={loading}
+              className="w-full py-3 mt-4 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all flex items-center justify-center"
+            >
+              {loading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Verify & Login'}
+            </button>
+            <button 
+              type="button" 
+              onClick={() => setStep('init')}
+              className="w-full py-2 text-slate-400 hover:text-white text-sm"
+            >
+              Back to Sign Up
+            </button>
+          </form>
+        )}
+      </motion.div>
+    </div>
+  );
+}
+
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate();
 
-  const handleLogin = () => {
-    // Simulate login
-    setUser({
-      id: 'u1',
-      name: 'Kai',
-      email: 'kai@nebulaforge.sg',
-      role: 'user',
-      isFirstTime: true
-    });
+  const handleLogin = (userData: User) => {
+    setUser(userData);
+    navigate('/'); // Redirect to home after login
   };
 
   const handleLogout = () => {
     setUser(null);
+    navigate('/');
   };
 
   return (
@@ -781,21 +1079,7 @@ const App = () => {
                 <p className="text-slate-400">Coming Soon</p>
             </div>
         } />
-        <Route path="/login" element={
-          <div className="h-screen flex items-center justify-center px-4">
-            <div className="bg-slate-900 p-8 rounded-xl border border-white/10 w-full max-w-md text-center">
-              <Zap className="w-12 h-12 text-cyan-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-white mb-2">Welcome Back</h2>
-              <p className="text-slate-400 mb-6">Access your saved builds and order history.</p>
-              <button 
-                onClick={handleLogin}
-                className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-lg transition-all"
-              >
-                Sign In (Demo)
-              </button>
-            </div>
-          </div>
-        } />
+        <Route path="/login" element={<AuthPage onLogin={handleLogin} />} />
         <Route path="*" element={
             <div className="pt-32 text-center">
                 <h2 className="text-2xl text-white">404</h2>
