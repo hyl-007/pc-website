@@ -1,189 +1,122 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { 
-  Cpu, 
-  Monitor, 
-  HardDrive, 
-  Zap, 
-  Box, 
-  Settings, 
-  Menu, 
-  X, 
-  ChevronRight, 
-  ShieldCheck, 
-  User as UserIcon, 
-  ShoppingCart,
-  Wrench,
-  Camera,
-  CheckCircle,
-  Lock,
-  DollarSign,
-  Mail,
-  AlertTriangle,
-  Loader2,
-  WifiOff,
-  ArrowRight
+  Cpu, Monitor, HardDrive, Zap, Box, Settings, Menu, X, 
+  Wrench, CheckCircle, DollarSign, AlertTriangle, Loader2,
+  Truck, LayoutDashboard, Store, Users, ShoppingBag, ArrowRight,
+  Camera, FileText, Globe, Mail, MapPin, Award, MousePointer2, Keyboard as KeyboardIcon,
+  Filter, Tag, Plus
 } from 'lucide-react';
-import { Part, User, GalleryItem, BuilderJob } from './types';
+import { Part, User, GalleryItem, PCBuild, SupplierOrder } from './types';
 
-// Register GSAP plugins
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 const API_URL = 'http://localhost:5000/api';
 
 // --- MOCK DATA ---
-
 const MOCK_PARTS: Part[] = [
-  // Chassis
-  { id: 'c1', name: 'Nebula Core X1 (3D Printed)', price: 150, type: 'chassis', image: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=400&auto=format&fit=crop' },
-  { id: 'c2', name: 'Void Walker S (Glass)', price: 200, type: 'chassis', image: 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?q=80&w=400&auto=format&fit=crop' },
-  // CPU
-  { id: 'cpu1', name: 'Intel Core i9-14900K', price: 600, type: 'cpu', image: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=200&auto=format&fit=crop' },
-  { id: 'cpu2', name: 'AMD Ryzen 9 7950X3D', price: 650, type: 'cpu', image: 'https://images.unsplash.com/photo-1555618254-76a0d46e398d?q=80&w=200&auto=format&fit=crop' },
-  // GPU
-  { id: 'gpu1', name: 'NVIDIA RTX 4090 OC', price: 1600, type: 'gpu', image: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=300&auto=format&fit=crop' },
-  { id: 'gpu2', name: 'NVIDIA RTX 4080 Super', price: 1000, type: 'gpu', image: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=300&auto=format&fit=crop' },
-  // RAM
-  { id: 'ram1', name: 'Corsair Dom. Titanium 64GB', price: 300, type: 'ram', image: 'https://images.unsplash.com/photo-1562976540-1502c2145186?q=80&w=200&auto=format&fit=crop' },
-  { id: 'ram2', name: 'G.Skill Trident Z5 32GB', price: 150, type: 'ram', image: 'https://images.unsplash.com/photo-1562976540-1502c2145186?q=80&w=200&auto=format&fit=crop' },
-  // Storage
-  { id: 'st1', name: 'Samsung 990 Pro 2TB', price: 180, type: 'storage', image: 'https://images.unsplash.com/photo-1597872250969-bc3a2d25d8a9?q=80&w=200&auto=format&fit=crop' },
-  { id: 'st2', name: 'Western Digital Black 4TB', price: 250, type: 'storage', image: 'https://plus.unsplash.com/premium_photo-1681488350153-2940656a1b24?q=80&w=200&auto=format&fit=crop' },
-  // PSU
-  { id: 'psu1', name: 'Thor 1200W Platinum', price: 300, type: 'psu', image: 'https://images.unsplash.com/photo-1544652478-6653e09f1826?q=80&w=200&auto=format&fit=crop' },
-  // MB
-  { id: 'mb1', name: 'ROG Maximus Z790', price: 500, type: 'motherboard', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=300&auto=format&fit=crop' },
+  // Core components
+  { id: 'cpu1', name: 'Intel i9-14900K', price: 600, type: 'cpu', image: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=200', supplierId: 'sup1', stock: 15 },
+  { id: 'cpu2', name: 'Ryzen 9 7950X', price: 550, type: 'cpu', image: 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?q=80&w=200', supplierId: 'sup1', stock: 12 },
+  { id: 'gpu1', name: 'RTX 4090 OC', price: 1600, type: 'gpu', image: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=300', supplierId: 'sup2', stock: 5 },
+  { id: 'gpu2', name: 'RTX 4080 Super', price: 1000, type: 'gpu', image: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?q=80&w=300', supplierId: 'sup2', stock: 8 },
+  { id: 'mb1', name: 'ROG Maximus Z790', price: 500, type: 'motherboard', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=300', supplierId: 'sup1', stock: 10 },
+  { id: 'c1', name: 'Nebula X1 Chassis', price: 150, type: 'chassis', image: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=400', supplierId: 'sup3', stock: 20 },
+  { id: 'ram1', name: '32GB DDR5 6000MHz', price: 180, type: 'ram', image: 'https://images.unsplash.com/photo-1562976540-1502c2145186?q=80&w=200', supplierId: 'sup1', stock: 25 },
+  { id: 'psu1', name: '1000W 80+ Gold Modular', price: 200, type: 'psu', image: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=200', supplierId: 'sup3', stock: 15 },
+  { id: 'st1', name: '2TB NVMe Gen4 SSD', price: 150, type: 'storage', image: 'https://images.unsplash.com/photo-1544652478-6653e09f18a2?q=80&w=200', supplierId: 'sup1', stock: 30 },
+  
+  // Accessories & Peripherals
+  { id: 'mon1', name: '34" Ultrawide 165Hz', price: 850, type: 'monitor', image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=400', supplierId: 'sup2', stock: 5 },
+  { id: 'mon2', name: '27" 4K Pro Art', price: 600, type: 'monitor', image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?q=80&w=400', supplierId: 'sup2', stock: 7 },
+  { id: 'kb1', name: 'Mechanical RGB Keyboard', price: 120, type: 'keyboard', image: 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?q=80&w=400', supplierId: 'sup3', stock: 40 },
+  { id: 'kb2', name: 'Nebula Wireless TKL', price: 160, type: 'keyboard', image: 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?q=80&w=400', supplierId: 'sup3', stock: 15 },
+  { id: 'ms1', name: 'Wireless Pro Mouse', price: 90, type: 'mouse', image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?q=80&w=400', supplierId: 'sup3', stock: 50 },
+  { id: 'ms2', name: 'Forge Ergonomic Mouse', price: 75, type: 'mouse', image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?q=80&w=400', supplierId: 'sup3', stock: 30 },
+  { id: 'acc1', name: 'Nebula Forge Desk Mat', price: 45, type: 'accessory', image: 'https://images.unsplash.com/photo-1616422285623-13ff0167c958?q=80&w=400', supplierId: 'sup3', stock: 100 },
+  { id: 'acc2', name: 'ARGB LED Strip Kit', price: 35, type: 'accessory', image: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=400', supplierId: 'sup3', stock: 200 },
+];
+
+const MOCK_BUILDERS: User[] = [
+  { id: 'b1', name: 'Artisan PC Sg', role: 'builder', email: 'artisan@forge.sg', isFirstTime: false, rating: 4.9, bio: 'Expert in hard-line water cooling.' },
+  { id: 'b2', name: 'NanoBuilds', role: 'builder', email: 'nano@forge.sg', isFirstTime: false, rating: 4.7, bio: 'Specialist in SFF (Small Form Factor) builds.' },
 ];
 
 const MOCK_GALLERY: GalleryItem[] = [
-  { id: 'g1', user: 'CyberNinja99', image: 'https://picsum.photos/id/20/600/400', specs: 'RTX 4090, i9-14900K', review: 'Absolute beast of a machine. The 3D printed chassis airflow is insane.', approved: true },
-  { id: 'g2', user: 'SGLooper', image: 'https://picsum.photos/id/21/600/400', specs: 'Ryzen 7, RTX 4070', review: 'Clean cable management by the builder. Delivered in 2 days.', approved: true },
+  { id: 'g1', builderId: 'b1', builderName: 'Artisan PC Sg', image: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=600', specs: 'RTX 4090, i9-14900K', review: 'Flawless execution on the cable management.' },
+  { id: 'g2', builderId: 'b2', builderName: 'NanoBuilds', image: 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?q=80&w=600', specs: 'Ryzen 7, RTX 4080', review: 'Tiny footprint, massive performance.' },
 ];
-
-const MOCK_JOBS: BuilderJob[] = [
-  { id: 'j1', customerName: 'Alice Tan', specs: MOCK_PARTS.slice(0, 4), payout: 150, status: 'pending', location: 'Tampines' },
-  { id: 'j2', customerName: 'Bob Lim', specs: MOCK_PARTS.slice(2, 6), payout: 220, status: 'pending', location: 'Jurong East' },
-];
-
-const CATEGORY_INFO: Record<string, string> = {
-  chassis: "The housing for your PC components. Determines airflow & size.",
-  cpu: "Central Processing Unit. The brain that handles instructions.",
-  motherboard: "Main circuit board connecting all components together.",
-  gpu: "Graphics Processing Unit. Renders complex images & games.",
-  ram: "Random Access Memory. Fast short-term storage for active tasks.",
-  storage: "Long-term storage (SSD/HDD) for your OS, games, and files.",
-  psu: "Power Supply Unit. Delivers stable power to all parts.",
-};
 
 // --- COMPONENTS ---
 
-// 1. Navigation
 const Navbar: React.FC<{ user: User | null; onLogout: () => void }> = ({ user, onLogout }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const navRef = useRef<HTMLDivElement>(null);
 
-  const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Customize', path: '/customize' },
-    { name: 'Gallery', path: '/gallery' },
-    { name: 'Accessories', path: '/accessories' },
-    { name: 'Builders', path: '/builders' },
-  ];
-
-  useGSAP(() => {
-    // Initial Nav Entry
-    gsap.from(navRef.current, {
-      y: -100,
-      opacity: 0,
-      duration: 1,
-      ease: "power3.out"
-    });
-  }, []);
+  const getNavLinks = () => {
+    if (!user) return [
+      { name: 'Home', path: '/' }, 
+      { name: 'Customise', path: '/customize' },
+      { name: 'Accessories', path: '/accessories' },
+      { name: 'Showcase', path: '/gallery' },
+      { name: 'Become a Builder', path: '/apply-builder' }
+    ];
+    if (user.role === 'buyer') return [
+      { name: 'Home', path: '/' },
+      { name: 'Customise', path: '/customize' },
+      { name: 'Accessories', path: '/accessories' },
+      { name: 'Find Builders', path: '/builders' },
+      { name: 'My Orders', path: '/dashboard' }
+    ];
+    if (user.role === 'builder') return [
+      { name: 'Job Board', path: '/jobs' },
+      { name: 'My Builds', path: '/dashboard' },
+      { name: 'Source Parts', path: '/supplier-hub' }
+    ];
+    if (user.role === 'supplier') return [
+      { name: 'Inventory', path: '/inventory' },
+      { name: 'Orders', path: '/orders' }
+    ];
+    return [];
+  };
 
   return (
-    <nav ref={navRef} className="fixed top-0 w-full z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center space-x-2 group">
-            <Zap className="h-8 w-8 text-cyan-400 group-hover:scale-110 transition-transform duration-300" />
-            <span className="text-2xl font-bold tracking-wider text-white">NEBULA<span className="text-cyan-400">FORGE</span></span>
-          </Link>
-          
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-8">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.path}
-                  className={`relative px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 group ${
-                    location.pathname === link.path ? 'text-cyan-400' : 'text-slate-300 hover:text-white'
-                  }`}
-                >
-                  {link.name}
-                  <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-cyan-400 transform origin-left transition-transform duration-300 ${location.pathname === link.path ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
-                </Link>
-              ))}
+    <nav className="fixed top-0 w-full z-50 border-b border-white/10 bg-slate-950/80 backdrop-blur-md">
+      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        <Link to="/" className="flex items-center space-x-2">
+          <Zap className="h-8 w-8 text-cyan-400" />
+          <span className="text-xl font-bold tracking-wider text-white">NEBULA<span className="text-cyan-400">FORGE</span></span>
+        </Link>
+        
+        <div className="hidden md:flex space-x-6">
+          {getNavLinks().map((link) => (
+            <Link key={link.name} to={link.path} className={`text-sm font-medium transition-colors ${location.pathname === link.path ? 'text-cyan-400' : 'text-slate-400 hover:text-white'}`}>
+              {link.name}
+            </Link>
+          ))}
+        </div>
+
+        <div className="flex items-center space-x-4">
+          {user ? (
+            <div className="flex items-center space-x-4">
+              <span className="text-xs px-2 py-1 bg-slate-800 rounded text-cyan-400 uppercase font-bold">{user.role}</span>
+              <button onClick={onLogout} className="text-sm text-red-400 font-bold hover:text-red-300">LOGOUT</button>
             </div>
-          </div>
-
-          <div className="hidden md:flex items-center space-x-4">
-            {user ? (
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-slate-400">
-                  {user.role === 'builder' ? '🛠️ ' : ''}Welcome, {user.name}
-                </span>
-                <button onClick={onLogout} className="text-sm text-red-400 hover:text-red-300">Logout</button>
-              </div>
-            ) : (
-              <Link 
-                to="/login" 
-                className="relative px-4 py-2 rounded-full overflow-hidden group border border-cyan-500/50 text-cyan-400"
-              >
-                <div className="absolute inset-0 w-full h-full bg-cyan-500/10 group-hover:bg-cyan-500/20 transition-all"></div>
-                <div className="absolute inset-0 w-0 bg-cyan-500/20 group-hover:w-full transition-all duration-300 ease-out"></div>
-                <span className="relative z-10">Login / Join</span>
-              </Link>
-            )}
-          </div>
-
-          <div className="-mr-2 flex md:hidden">
-            <button onClick={() => setIsOpen(!isOpen)} className="text-slate-300 hover:text-white p-2">
-              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
-          </div>
+          ) : (
+            <Link to="/login" className="px-4 py-2 rounded-full border border-cyan-500/50 text-cyan-400 text-sm font-bold uppercase tracking-wider hover:bg-cyan-500/10 transition-all">Join Platform</Link>
+          )}
         </div>
       </div>
-      
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div className="md:hidden bg-slate-900 border-b border-white/10">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-             {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.path}
-                  onClick={() => setIsOpen(false)}
-                  className="block px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:text-white hover:bg-slate-800"
-                >
-                  {link.name}
-                </Link>
-              ))}
-              {!user && (
-                 <Link to="/login" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-cyan-400">Login / Join</Link>
-              )}
-          </div>
-        </div>
-      )}
     </nav>
   );
 };
 
-// 2. Hero Section
+// --- LANDING PAGE COMPONENTS ---
+
 const Hero = () => {
   const containerRef = useRef(null);
   const titleRef = useRef(null);
@@ -192,73 +125,30 @@ const Hero = () => {
 
   useGSAP(() => {
     const tl = gsap.timeline();
-
-    tl.from(titleRef.current, {
-      y: 100,
-      opacity: 0,
-      duration: 1.2,
-      ease: "power4.out",
-      skewY: 7
-    })
-    .from(textRef.current, {
-      y: 20,
-      opacity: 0,
-      duration: 0.8,
-      ease: "power2.out"
-    }, "-=0.5")
-    .from(btnRef.current, {
-      scale: 0.8,
-      opacity: 0,
-      duration: 0.5,
-      ease: "back.out(1.7)"
-    }, "-=0.3");
-
-    // Subtle parallax on mouse move
-    const handleMouseMove = (e: MouseEvent) => {
-      const { clientX, clientY } = e;
-      const x = (clientX / window.innerWidth - 0.5) * 20;
-      const y = (clientY / window.innerHeight - 0.5) * 20;
-      
-      gsap.to(containerRef.current, {
-        backgroundPosition: `calc(50% + ${x}px) calc(50% + ${y}px)`,
-        duration: 0.5,
-        ease: "power1.out"
-      });
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-
+    tl.from(titleRef.current, { y: 100, opacity: 0, duration: 1, ease: "power4.out", skewY: 5 })
+      .from(textRef.current, { y: 30, opacity: 0, duration: 0.8, ease: "power2.out" }, "-=0.5")
+      .from(btnRef.current, { scale: 0.8, opacity: 0, duration: 0.5, ease: "back.out(1.7)" }, "-=0.3");
   }, { scope: containerRef });
 
   return (
     <div ref={containerRef} className="relative h-screen flex items-center justify-center overflow-hidden bg-[url('https://images.unsplash.com/photo-1587202372775-e229f172b9d7?q=80&w=2574&auto=format&fit=crop')] bg-cover bg-center">
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"></div>
+      <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-sm"></div>
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
       
       <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
-        <h1 
-          ref={titleRef}
-          className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 mb-6 drop-shadow-2xl leading-tight"
-        >
+        <h1 ref={titleRef} className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 mb-6 drop-shadow-2xl">
           ARCHITECT YOUR REALITY
         </h1>
-        
-        <p 
-          ref={textRef}
-          className="text-xl md:text-2xl text-slate-300 mb-10 font-light tracking-wide max-w-2xl mx-auto"
-        >
-          Singapore's Premium Custom PC Ecosystem. <br />
-          Designed by you. Built by artisans. Delivered to your doorstep.
+        <p ref={textRef} className="text-xl md:text-2xl text-slate-300 mb-10 font-light tracking-wide max-w-2xl mx-auto">
+          Singapore's First 4-Party PC Ecosystem. <br />
+          Where Buyers, Builders, and Suppliers unite.
         </p>
-        
         <div ref={btnRef} className="flex flex-col sm:flex-row justify-center gap-6">
-          <Link to="/customize" className="group relative px-8 py-4 bg-cyan-500 text-slate-950 font-bold rounded-none skew-x-[-10deg] hover:bg-cyan-400 transition-all overflow-hidden">
-            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-[20deg]"></div>
-            <span className="block skew-x-[10deg]">CUSTOMIZE RIG</span>
+          <Link to="/customize" className="px-8 py-4 bg-cyan-600 text-white font-bold rounded-lg hover:bg-cyan-500 transition-all uppercase tracking-widest shadow-lg shadow-cyan-900/40">
+            Customize Rig
           </Link>
-          <Link to="/gallery" className="group relative px-8 py-4 bg-transparent border border-white/30 text-white font-bold rounded-none skew-x-[-10deg] hover:bg-white/10 transition-all">
-            <span className="block skew-x-[10deg]">VIEW SHOWCASE</span>
+          <Link to="/gallery" className="px-8 py-4 bg-transparent border border-white/20 text-white font-bold rounded-lg hover:bg-white/5 transition-all uppercase tracking-widest">
+            View Showcase
           </Link>
         </div>
       </div>
@@ -266,53 +156,36 @@ const Hero = () => {
   );
 };
 
-// 3. Why Choose Us / How It Works
 const InfoSection = () => {
   const sectionRef = useRef(null);
   
   useGSAP(() => {
-    const cards = gsap.utils.toArray('.info-card');
-    
-    // Animate cards on scroll
-    gsap.from(cards, {
-      y: 50,
-      opacity: 0,
-      duration: 0.8,
-      stagger: 0.2,
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top 80%",
-      },
+    gsap.from('.info-card', {
+      y: 50, opacity: 0, duration: 0.8, stagger: 0.2,
+      scrollTrigger: { trigger: sectionRef.current, start: "top 80%" },
       ease: "power2.out"
     });
   }, { scope: sectionRef });
 
   const steps = [
-    { title: 'Visualize', desc: 'Drag & drop premium components into your chassis.', icon: <Monitor className="w-10 h-10 text-cyan-400" /> },
-    { title: 'Engineer', desc: 'Verified local builders assemble your rig with precision.', icon: <Wrench className="w-10 h-10 text-purple-500" /> },
-    { title: 'Deploy', desc: 'Secure delivery to your doorstep within Singapore.', icon: <Box className="w-10 h-10 text-green-400" /> },
+    { title: 'Visualize', desc: 'Drag & drop components in our immersive visualizer.', icon: <Monitor className="w-10 h-10 text-cyan-400" /> },
+    { title: 'Engineer', desc: 'Verified artisans compete to build your configuration.', icon: <Wrench className="w-10 h-10 text-purple-500" /> },
+    { title: 'Deploy', desc: 'Safe delivery to your doorstep within 3-5 days.', icon: <Truck className="w-10 h-10 text-green-400" /> },
   ];
 
   return (
     <section ref={sectionRef} className="py-24 bg-slate-950 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-         <div className="absolute top-10 right-10 w-96 h-96 bg-purple-600 rounded-full blur-[100px]"></div>
-         <div className="absolute bottom-10 left-10 w-80 h-80 bg-cyan-600 rounded-full blur-[100px]"></div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 relative z-10">
         <div className="grid md:grid-cols-2 gap-16 items-center mb-24">
           <div>
-            <h2 className="text-4xl font-bold text-white mb-6">BEYOND PRE-BUILTS</h2>
+            <h2 className="text-4xl font-bold text-white mb-6 uppercase tracking-tight">The Artisan Edge</h2>
             <p className="text-slate-400 mb-4 text-lg">
-              We leverage <span className="text-cyan-400">industrial 3D printing</span> to create chassis designs impossible with traditional manufacturing. 
-              No physical shop means we invest more in components and talent.
+              We've cut out the retail middleman. By connecting you directly with industrial <span className="text-cyan-400">suppliers</span> and artisan <span className="text-purple-400">builders</span>, we offer better components at lower prices.
             </p>
             <ul className="space-y-4 text-slate-300">
-              <li className="flex items-center"><CheckCircle className="w-5 h-5 mr-3 text-cyan-500" /> Fully modular 3D printed aesthetics</li>
-              <li className="flex items-center"><CheckCircle className="w-5 h-5 mr-3 text-cyan-500" /> Local Singaporean artisan network</li>
-              <li className="flex items-center"><CheckCircle className="w-5 h-5 mr-3 text-cyan-500" /> 15% Cheaper than retail stores</li>
+              <li className="flex items-center"><CheckCircle className="w-5 h-5 mr-3 text-cyan-500" /> Escrow-protected payments</li>
+              <li className="flex items-center"><CheckCircle className="w-5 h-5 mr-3 text-cyan-500" /> Verified builder portfolio tracking</li>
+              <li className="flex items-center"><CheckCircle className="w-5 h-5 mr-3 text-cyan-500" /> Real-time supplier inventory sync</li>
             </ul>
           </div>
           <div className="relative group">
@@ -321,12 +194,12 @@ const InfoSection = () => {
           </div>
         </div>
 
-        <h2 className="text-3xl font-bold text-center text-white mb-12">THE PROCESS</h2>
+        <h2 className="text-3xl font-bold text-center text-white mb-12 uppercase">The Process</h2>
         <div className="grid md:grid-cols-3 gap-8">
           {steps.map((step, idx) => (
-            <div key={idx} className="info-card bg-slate-900/50 p-8 rounded-xl border border-white/5 hover:border-cyan-500/50 transition-colors hover:bg-slate-900/80">
+            <div key={idx} className="info-card bg-slate-900/50 p-8 rounded-xl border border-white/5 hover:border-cyan-500/50 transition-colors">
               <div className="mb-6">{step.icon}</div>
-              <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
+              <h3 className="text-xl font-bold text-white mb-2 uppercase">{step.title}</h3>
               <p className="text-slate-400">{step.desc}</p>
             </div>
           ))}
@@ -336,709 +209,456 @@ const InfoSection = () => {
   );
 };
 
-// 4. Configurator (The Core Feature)
-const Configurator: React.FC<{ user: User | null }> = ({ user }) => {
-  // Allow multiple storage devices
-  const [selectedParts, setSelectedParts] = useState<{
-    chassis: Part | null;
-    cpu: Part | null;
-    gpu: Part | null;
-    ram: Part | null;
-    motherboard: Part | null;
-    psu: Part | null;
-    storage: Part[]; // Changed from Part | null to Part[]
-  }>({
-    chassis: null,
-    cpu: null,
-    gpu: null,
-    ram: null,
-    motherboard: null,
-    psu: null,
-    storage: [],
-  });
+// --- MARKETPLACE PORTALS ---
 
-  const categories = ['chassis', 'cpu', 'motherboard', 'gpu', 'ram', 'storage', 'psu'];
-  const [activeCategory, setActiveCategory] = useState('chassis');
-  const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null);
-
-  // Updated Total Price Logic
-  const totalPrice = Object.entries(selectedParts).reduce((acc, [key, part]) => {
-    if (key === 'storage' && Array.isArray(part)) {
-        return acc + part.reduce((s, p) => s + p.price, 0);
-    }
-    if (part && !Array.isArray(part)) return acc + (part as Part).price;
-    return acc;
-  }, 0);
-
-  const discount = (user?.isFirstTime && user.role === 'user') ? 0.15 : 0;
-  const finalPrice = totalPrice * (1 - discount);
-
-  const handleSelect = (part: Part) => {
-    if (part.type === 'storage') {
-        setSelectedParts(prev => {
-            const currentStorage = prev.storage;
-            const exists = currentStorage.find(p => p.id === part.id);
-            if (exists) {
-                // Remove if already selected (toggle)
-                return { ...prev, storage: currentStorage.filter(p => p.id !== part.id) };
-            }
-            // Add to selection
-            return { ...prev, storage: [...currentStorage, part] };
-        });
-    } else {
-        setSelectedParts(prev => ({ ...prev, [part.type]: part }));
-    }
-  };
-
-  const isPartSelected = (part: Part) => {
-    // Safely retrieve the selected part(s) based on key
-    const selection = selectedParts[part.type as keyof typeof selectedParts];
-    if (Array.isArray(selection)) {
-        return selection.some(p => p.id === part.id);
-    }
-    return selection?.id === part.id;
-  };
-
-  // Helper for lighting status
-  const isPowered = !!selectedParts.psu;
-
-  // VISUALIZER GSAP REFERENCES
-  const visualizerRef = useRef<HTMLDivElement>(null);
-  
-  // Animate chassis appearance
-  useGSAP(() => {
-    if (selectedParts.chassis) {
-      gsap.fromTo(".chassis-frame", 
-        { scale: 0.9, opacity: 0 }, 
-        { scale: 1, opacity: 1, duration: 0.8, ease: "back.out(1.2)" }
-      );
-    }
-  }, [selectedParts.chassis]);
-
-  // --- COMPONENT ANIMATIONS ---
-  
-  // 1. Motherboard: Fades in with a "tech" scale effect
-  useGSAP(() => {
-    if (selectedParts.motherboard && selectedParts.chassis) {
-      gsap.fromTo(".mb-part", 
-        { opacity: 0, scale: 1.1, filter: "blur(10px)" }, 
-        { opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.8, ease: "power2.out" }
-      );
-    }
-  }, [selectedParts.motherboard]);
-
-  // 2. CPU: Drops from top with precision snap
-  useGSAP(() => {
-    if (selectedParts.cpu && selectedParts.chassis) {
-        const tl = gsap.timeline();
-        tl.fromTo(".cpu-part", 
-          { y: -300, opacity: 0, scale: 2 },
-          { y: 0, opacity: 1, scale: 1, duration: 0.8, ease: "elastic.out(1, 0.5)" }
-        )
-        .to(".cpu-light", { opacity: 1, duration: 0.1, yoyo: true, repeat: 3, ease: "power1.inOut" }, "-=0.2");
-    }
-  }, [selectedParts.cpu]);
-
-  // 3. RAM: Slides in diagonally and snaps
-  useGSAP(() => {
-    if (selectedParts.ram && selectedParts.chassis) {
-      gsap.fromTo(".ram-part",
-        { x: 50, y: -50, opacity: 0 },
-        { x: 0, y: 0, opacity: 1, duration: 0.6, ease: "back.out(2)" }
-      );
-    }
-  }, [selectedParts.ram]);
-
-  // 4. GPU: Slides in from side with "heavy" inertia
-  useGSAP(() => {
-    if (selectedParts.gpu && selectedParts.chassis) {
-      gsap.fromTo(".gpu-part",
-        { x: -400, opacity: 0, skewX: -10 },
-        { x: 0, opacity: 1, skewX: 0, duration: 0.9, ease: "power4.out" }
-      );
-    }
-  }, [selectedParts.gpu]);
-
-  // 5. PSU: Lifts up from bottom into the shroud
-  useGSAP(() => {
-    if (selectedParts.psu && selectedParts.chassis) {
-       gsap.fromTo(".psu-part",
-         { y: 150, opacity: 0 },
-         { y: 0, opacity: 1, duration: 0.8, ease: "circ.out" }
-       );
-    }
-  }, [selectedParts.psu]);
-
-  // 6. Storage: Staggered slide in
-  useGSAP(() => {
-      if (selectedParts.storage.length > 0 && selectedParts.chassis) {
-          gsap.fromTo(".storage-part",
-             { x: 100, opacity: 0 },
-             { x: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: "back.out(1.2)" }
-          );
-      }
-  }, [selectedParts.storage]); // Re-run when storage array changes
-
-  // Ambient Loop for powered system
-  useGSAP(() => {
-    if (isPowered) {
-       gsap.to(".power-glow", {
-          opacity: 0.6,
-          duration: 2,
-          repeat: -1,
-          yoyo: true,
-          ease: "sine.inOut"
-       });
-    }
-  }, [isPowered]);
-
-
-  return (
-    <div className="pt-20 pb-12 min-h-screen bg-slate-950 flex flex-col">
-      <div className="flex-1 max-w-7xl mx-auto w-full px-4 flex flex-col lg:flex-row gap-8">
-        
-        {/* Left Panel: Component Selection */}
-        <div className="w-full lg:w-1/3 bg-slate-900/80 backdrop-blur-md rounded-xl border border-white/10 p-6 flex flex-col h-[80vh]">
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-            <Settings className="mr-2 text-cyan-400" /> COMPONENT SELECTION
-          </h2>
-          
-          {/* Category Tabs */}
-          <div 
-            className="flex overflow-x-auto space-x-2 pb-4 mb-4 scrollbar-thin"
-            onScroll={() => setTooltip(null)} // Hide tooltip on scroll
-          >
-            {categories.map(cat => {
-              const selection = selectedParts[cat as keyof typeof selectedParts];
-              const isFilled = Array.isArray(selection) ? selection.length > 0 : !!selection;
-              const isActive = activeCategory === cat;
-
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  onMouseEnter={(e) => {
-                     const rect = e.currentTarget.getBoundingClientRect();
-                     setTooltip({
-                       text: CATEGORY_INFO[cat] || '',
-                       x: rect.left + rect.width / 2,
-                       y: rect.top
-                     });
-                  }}
-                  onMouseLeave={() => setTooltip(null)}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold uppercase whitespace-nowrap transition-all flex items-center gap-2 border ${
-                    isActive 
-                      ? 'bg-cyan-600 text-white border-cyan-500 shadow-lg shadow-cyan-500/30' 
-                      : isFilled
-                        ? 'bg-slate-800 text-cyan-400 border-cyan-500/50 shadow-[0_0_10px_rgba(6,182,212,0.15)]'
-                        : 'bg-slate-800 text-slate-400 border-transparent hover:bg-slate-700'
-                  }`}
-                >
-                  {cat}
-                  {isFilled && (
-                    <motion.div 
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white' : 'bg-cyan-400'} shadow-[0_0_5px_currentColor]`}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Parts List */}
-          <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-            {MOCK_PARTS.filter(p => p.type === activeCategory).map(part => {
-              const selected = isPartSelected(part);
-              return (
-                <div 
-                    key={part.id}
-                    onClick={() => handleSelect(part)}
-                    className={`p-4 rounded-lg border cursor-pointer transition-all flex items-center space-x-4 group ${
-                    selected
-                        ? 'border-cyan-500 bg-cyan-500/10' 
-                        : 'border-white/5 bg-slate-800/50 hover:border-white/20'
-                    }`}
-                >
-                    <img src={part.image} alt={part.name} className="w-16 h-16 object-cover rounded bg-slate-700 group-hover:scale-105 transition-transform" />
-                    <div className="flex-1">
-                    <h4 className="text-white font-medium">{part.name}</h4>
-                    <p className="text-cyan-400 font-bold">${part.price}</p>
-                    </div>
-                    {selected && <CheckCircle className="text-cyan-500 w-5 h-5" />}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Center: Visualization */}
-        <div ref={visualizerRef} className="w-full lg:w-1/3 relative flex flex-col items-center justify-center bg-slate-900/40 rounded-xl border border-white/5 p-8 overflow-hidden min-h-[500px]">
-          {/* Background Grid Effect */}
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px]"></div>
-          
-          <AnimatePresence mode="wait">
-             {selectedParts.chassis ? (
-               <div 
-                key="chassis-container"
-                className="chassis-frame relative w-72 h-[32rem] border-4 border-slate-700 bg-slate-800/90 rounded-xl flex flex-col items-center shadow-2xl shadow-cyan-900/20 overflow-hidden"
-               >
-                  {/* --- Dynamic Lighting & AO Layer --- */}
-                  <div className="absolute inset-0 pointer-events-none z-0">
-                    <div className="absolute inset-0 bg-slate-900/80" />
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,transparent_40%,rgba(0,0,0,0.8)_100%)]" /> {/* Darkened edge for depth */}
-                    
-                    {/* CPU Ambient Glow */}
-                    {selectedParts.cpu && (
-                        <div className={`cpu-light absolute top-[20%] left-1/2 -translate-x-1/2 w-48 h-48 bg-cyan-400 blur-[80px] rounded-full mix-blend-screen opacity-20 ${isPowered ? 'power-glow' : ''}`}></div>
-                    )}
-                    
-                    {/* GPU Ambient Glow */}
-                    {selectedParts.gpu && (
-                        <div className={`absolute top-[45%] left-0 right-0 h-32 bg-green-500 blur-[60px] mix-blend-screen opacity-20 ${isPowered ? 'power-glow' : ''}`}></div>
-                    )}
-                  </div>
-
-                  {/* Chassis Image Background (faint) */}
-                  <img src={selectedParts.chassis.image} alt="chassis" className="absolute inset-0 w-full h-full object-cover opacity-10 pointer-events-none blur-sm z-0" />
-                  
-                  <div className="absolute top-0 w-full h-full flex flex-col p-4 z-10 gap-2">
-                    {/* Top Section: Motherboard Area */}
-                    <div className="relative flex-[2] w-full border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/40 shadow-[inset_0_0_40px_rgba(0,0,0,0.9)] overflow-hidden">
-                        {/* Motherboard Backplate/Tray Detail */}
-                        <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-800 to-black pointer-events-none"></div>
-
-                        {/* Motherboard */}
-                        {selectedParts.motherboard && (
-                            <div className="mb-part absolute inset-2 z-0 transform perspective-[800px] rotate-x-2">
-                                <img 
-                                    key={selectedParts.motherboard.id}
-                                    src={selectedParts.motherboard.image} 
-                                    className="w-full h-full object-cover opacity-70 rounded-lg drop-shadow-[0_20px_30px_rgba(0,0,0,0.9)] grayscale-[0.2]" 
-                                />
-                                {/* AO Overlay for Motherboard - deepened */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-black/80 rounded-lg mix-blend-overlay"></div>
-                                <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.5)] rounded-lg pointer-events-none"></div>
-                            </div>
-                        )}
-
-                        {/* CPU */}
-                        {selectedParts.cpu && (
-                            <div className="cpu-part absolute top-[25%] left-1/2 -translate-x-1/2 w-20 h-20 bg-slate-900 border border-cyan-500/50 shadow-[0_0_30px_rgba(0,0,0,0.8),inset_0_0_10px_rgba(0,0,0,1)] z-20 flex items-center justify-center rounded-lg overflow-hidden group">
-                                <img src={selectedParts.cpu.image} className="w-full h-full object-cover opacity-90 group-hover:scale-110 transition-transform duration-500" />
-                                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70"></div> {/* Stronger Self-shadow */}
-                                <div className="absolute inset-0 bg-cyan-400 mix-blend-overlay opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                                {/* Pin Highlight */}
-                                <div className="absolute top-0 right-0 w-3 h-3 bg-cyan-400 blur-sm opacity-50"></div>
-                            </div>
-                        )}
-
-                        {/* RAM */}
-                        {selectedParts.ram && (
-                            <div className="ram-part absolute top-[20%] right-[12%] w-8 h-[50%] bg-slate-900/80 border-r-2 border-slate-600 shadow-[-10px_10px_20px_rgba(0,0,0,0.9)] z-20 flex flex-col overflow-hidden rounded transform skew-y-12 origin-top-right">
-                                <img src={selectedParts.ram.image} className="w-full h-full object-cover opacity-80" />
-                                <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent"></div> {/* Side shadow for depth */}
-                                <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent mix-blend-overlay"></div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Middle Section: GPU Area */}
-                    <div className="relative h-28 w-full border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/50 perspective-[1200px] shadow-[inset_0_15px_30px_rgba(0,0,0,0.8)] overflow-visible z-20">
-                         {/* GPU Slot Highlight */}
-                         <div className="absolute bottom-2 left-2 right-2 h-1 bg-slate-800 shadow-[0_0_10px_rgba(0,255,255,0.1)]"></div>
-                         
-                        {selectedParts.gpu ? (
-                            <div className="gpu-part relative w-[98%] h-24 bg-slate-800 border-t border-white/10 border-b-4 border-b-black/80 rounded flex items-center shadow-[0_30px_50px_rgba(0,0,0,1)] overflow-hidden z-20 cursor-pointer transform hover:scale-[1.01] transition-transform origin-center">
-                                <img src={selectedParts.gpu.image} className="w-full h-full object-cover opacity-95" />
-                                <div className="absolute bottom-2 right-2 text-[10px] text-green-400 font-bold bg-black/90 px-3 py-1 rounded backdrop-blur-md border border-green-500/30 shadow-lg">RTX ON</div>
-                                <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-black/90 pointer-events-none"></div> {/* Heavy grounding gradient */}
-                                <div className="absolute top-0 w-full h-[1px] bg-white/30"></div> {/* Top edge light */}
-                            </div>
-                        ) : <span className="text-xs text-slate-600 font-mono tracking-widest opacity-40">PCIE X16 SLOT</span>}
-                    </div>
-
-                    {/* Bottom Section: PSU & Storage */}
-                    <div className="flex h-24 gap-3 w-full z-10">
-                        {/* PSU */}
-                        <div className="flex-[2] border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/60 overflow-hidden relative group shadow-[inset_0_10px_30px_rgba(0,0,0,0.9)]">
-                            {selectedParts.psu ? (
-                                <div className="psu-part w-full h-full relative">
-                                    <img src={selectedParts.psu.image} className="w-full h-full object-cover opacity-60 grayscale-[0.3]" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div> {/* Deep recess feel */}
-                                    <div className="absolute inset-0 shadow-[inset_0_0_20px_black]"></div>
-                                    <div className="absolute bottom-2 left-4">
-                                        <div className="flex items-center space-x-2">
-                                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                            <span className="text-[10px] font-bold text-slate-300 tracking-widest">ACTIVE</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : <span className="text-xs text-slate-600 opacity-40">PSU SHROUD</span>}
-                        </div>
-                        {/* Storage */}
-                        <div className="flex-1 border border-dashed border-white/10 rounded-lg flex items-center justify-center bg-black/60 relative overflow-hidden shadow-[inset_0_10px_20px_rgba(0,0,0,0.8)]">
-                             {selectedParts.storage.length > 0 ? (
-                                <div className="relative w-full h-full flex items-center justify-center perspective-[800px]">
-                                    {selectedParts.storage.map((disk, i) => (
-                                        <div
-                                            key={disk.id}
-                                            className="storage-part absolute w-[80%] h-[70%] bg-slate-800 rounded border border-slate-700 shadow-xl overflow-hidden"
-                                            style={{ 
-                                                left: `${50 + (i * 5)}%`, 
-                                                top: `${50 - (i * 5)}%`, 
-                                                translate: '-50% -50%',
-                                                zIndex: i,
-                                                transform: `rotateY(-15deg) translateZ(${i * 10}px)`,
-                                                boxShadow: '-5px 5px 15px rgba(0,0,0,0.8)'
-                                            }}
-                                        >
-                                            <img src={disk.image} className="w-full h-full object-cover opacity-80" />
-                                            <div className="absolute inset-0 bg-black/50"></div>
-                                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500/50"></div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : <span className="text-xs text-slate-600 opacity-40">DRIVE CAGE</span>}
-                        </div>
-                    </div>
-                  </div>
-                  
-                  {/* Glass Panel Reflection overlay - Enhanced */}
-                  <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/5 via-transparent to-white/5 pointer-events-none rounded-xl border border-white/5 z-20"></div>
-                  <div className="absolute top-0 right-0 w-full h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none z-20 transform -skew-y-12 opacity-30"></div>
-                  
-                  {/* Final Frame Glint/Shadow vignette */}
-                  <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,0.8)] rounded-xl pointer-events-none z-30"></div>
-               </div>
-             ) : (
-               <div className="text-center text-slate-500">
-                 <Box className="w-24 h-24 mx-auto mb-4 opacity-20" />
-                 <p>Select a Chassis to begin</p>
-               </div>
-             )}
-          </AnimatePresence>
-
-          {/* Stats Overlay */}
-          <div className="absolute bottom-4 left-4 right-4 flex justify-between text-xs text-slate-400 z-20">
-             <span>Power: {selectedParts.psu ? <span className="text-green-400">Stable</span> : 'Checking...'}</span>
-             <span>Est. Wattage: {selectedParts.gpu && selectedParts.cpu ? '750W' : '---'}</span>
-          </div>
-        </div>
-
-        {/* Right: Summary */}
-        <div className="w-full lg:w-1/3 bg-slate-900/80 backdrop-blur-md rounded-xl border border-white/10 p-6 flex flex-col justify-between h-[80vh]">
-          <div>
-            <h2 className="text-2xl font-bold text-white mb-6">BUILD SUMMARY</h2>
-            <div className="space-y-3 mb-6 max-h-[40vh] overflow-y-auto custom-scrollbar pr-2">
-              {Object.entries(selectedParts).map(([type, part]) => {
-                // Special handling for storage array
-                if (type === 'storage' && Array.isArray(part) && part.length > 0) {
-                     const storageParts = part as Part[];
-                     return (
-                         <div key={type} className="border-b border-white/5 pb-2">
-                             <div className="flex justify-between text-sm">
-                                 <span className="text-slate-400 uppercase">STORAGE ({storageParts.length})</span>
-                             </div>
-                             {storageParts.map(p => (
-                                 <div key={p.id} className="flex justify-between text-sm pl-4 mt-1">
-                                     <span className="text-slate-300 text-xs truncate max-w-[150px]">{p.name}</span>
-                                     <span className="text-slate-200 text-xs">${p.price}</span>
-                                 </div>
-                             ))}
-                         </div>
-                     );
-                }
-                
-                // Normal handling for single parts
-                if (part && !Array.isArray(part)) {
-                   const singlePart = part as Part;
-                   return (
-                    <div key={type} className="flex justify-between text-sm border-b border-white/5 pb-2">
-                        <span className="text-slate-400 uppercase">{type}</span>
-                        <span className="text-slate-200">{singlePart.name}</span>
-                    </div>
-                   );
-                }
-                return null;
-              })}
+const BuilderMarketplace = () => (
+  <div className="pt-24 pb-12 max-w-7xl mx-auto px-4">
+    <h1 className="text-4xl font-bold text-white mb-8">CHOOSE YOUR ARTISAN</h1>
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {MOCK_BUILDERS.map(builder => (
+        <div key={builder.id} className="bg-slate-900/50 border border-white/10 rounded-xl p-6 hover:border-cyan-500/50 transition-all">
+          <div className="flex justify-between items-start mb-4">
+            <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-cyan-400">
+              <Wrench size={32} />
+            </div>
+            <div className="text-right">
+              <div className="text-cyan-400 font-bold text-xl">★ {builder.rating}</div>
+              <div className="text-xs text-slate-500">Singapore Based</div>
             </div>
           </div>
+          <h3 className="text-xl font-bold text-white mb-2 uppercase">{builder.name}</h3>
+          <p className="text-slate-400 text-sm mb-6 line-clamp-3">{builder.bio}</p>
+          <button className="w-full py-3 bg-slate-800 hover:bg-cyan-600 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2 uppercase tracking-widest text-xs">
+            View Portfolio <ArrowRight size={14} />
+          </button>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
-          <div className="space-y-4">
-             {user?.isFirstTime && (
-                <div className="bg-green-500/10 border border-green-500/30 p-3 rounded text-green-400 text-sm flex items-center">
-                  <DollarSign className="w-4 h-4 mr-2" /> New Member Discount (15%) Applied!
-                </div>
-             )}
-            <div className="flex justify-between items-end">
-              <span className="text-slate-400">Total Estimate</span>
-              <div className="text-right">
-                {user?.isFirstTime && <span className="block text-sm line-through text-slate-500">${totalPrice.toLocaleString()}</span>}
-                <span className="text-4xl font-bold text-cyan-400">${finalPrice.toLocaleString()}</span>
+const BuilderDashboard = () => (
+  <div className="pt-24 pb-12 max-w-7xl mx-auto px-4">
+    <div className="grid lg:grid-cols-3 gap-8">
+      <div className="lg:col-span-2 space-y-6">
+        <h2 className="text-2xl font-bold text-white uppercase tracking-widest">Active Build Jobs</h2>
+        {[1, 2].map(i => (
+          <div key={i} className="bg-slate-900 border border-white/10 rounded-xl p-6 flex flex-col md:flex-row justify-between items-center">
+            <div className="flex items-center gap-4">
+              <div className="p-4 bg-cyan-500/10 rounded-lg text-cyan-400">
+                <Box size={32} />
+              </div>
+              <div>
+                <h4 className="text-white font-bold uppercase">Build Request #WF-1092</h4>
+                <p className="text-slate-500 text-sm">Customer: Michael K. • Budget: $4,500</p>
               </div>
             </div>
-            <button className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-600 rounded-lg font-bold text-white hover:from-cyan-500 hover:to-blue-500 transition-all shadow-lg shadow-cyan-900/40 uppercase tracking-widest relative overflow-hidden group">
-              <span className="relative z-10">Checkout Build</span>
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </button>
-            <p className="text-xs text-center text-slate-500">Built by verified experts. Delivered in 3-5 days.</p>
+            <div className="mt-4 md:mt-0 flex gap-3">
+              <button className="px-6 py-2 bg-cyan-600 rounded text-xs font-bold uppercase tracking-widest">Accept Job</button>
+              <button className="px-6 py-2 bg-slate-800 rounded text-xs font-bold uppercase tracking-widest">View Specs</button>
+            </div>
           </div>
-        </div>
-
+        ))}
       </div>
+      <div className="bg-slate-900 border border-white/10 rounded-xl p-6">
+        <h2 className="text-xl font-bold text-white mb-4 uppercase tracking-widest">Supplier Status</h2>
+        <div className="space-y-4">
+           <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2">
+              <span className="text-slate-400">RTX 4090 OC</span>
+              <span className="text-green-400 font-bold uppercase text-[10px]">In Stock</span>
+           </div>
+           <div className="flex justify-between items-center text-sm border-b border-white/5 pb-2">
+              <span className="text-slate-400">i9-14900K</span>
+              <span className="text-yellow-400 font-bold uppercase text-[10px]">Low Stock</span>
+           </div>
+        </div>
+        <Link to="/inventory" className="mt-6 block text-center py-3 border border-dashed border-cyan-500/30 text-cyan-400 rounded-lg hover:bg-cyan-500/5 uppercase text-xs font-bold tracking-widest transition-all">
+          Manage Inventory
+        </Link>
+      </div>
+    </div>
+  </div>
+);
 
-      {/* Tooltip Overlay */}
-      <AnimatePresence>
-        {tooltip && (
-          <motion.div
-            initial={{ opacity: 0, y: 5, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            style={{ 
-              position: 'fixed', 
-              left: tooltip.x, 
-              top: tooltip.y - 12,
-              translateX: '-50%',
-              translateY: '-100%'
-            }}
-            className="fixed z-[100] px-3 py-2 bg-slate-900/95 backdrop-blur border border-cyan-500/50 text-xs text-cyan-50 rounded shadow-[0_4px_20px_rgba(0,0,0,0.5)] whitespace-nowrap pointer-events-none"
-          >
-             <div className="relative z-10">{tooltip.text}</div>
-             {/* Arrow */}
-             <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 w-2 h-2 bg-slate-900 border-r border-b border-cyan-500/50 rotate-45"></div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+const SupplierPortal = () => (
+  <div className="pt-24 pb-12 max-w-7xl mx-auto px-4">
+    <div className="flex justify-between items-center mb-8">
+      <h1 className="text-3xl font-bold text-white uppercase tracking-widest">Vendor Inventory</h1>
+      <button className="px-6 py-2 bg-cyan-600 rounded-lg text-xs font-bold uppercase tracking-widest">+ Add SKU</button>
+    </div>
+    <div className="bg-slate-900 rounded-xl border border-white/10 overflow-hidden">
+      <table className="w-full text-left">
+        <thead className="bg-slate-800 text-slate-400 text-[10px] uppercase tracking-widest font-black">
+          <tr>
+            <th className="p-4">Component</th>
+            <th className="p-4">Price</th>
+            <th className="p-4">Stock</th>
+            <th className="p-4">Demand</th>
+            <th className="p-4">Action</th>
+          </tr>
+        </thead>
+        <tbody className="text-slate-300">
+          {MOCK_PARTS.map(part => (
+            <tr key={part.id} className="border-t border-white/5 hover:bg-white/[0.02] transition-colors">
+              <td className="p-4 flex items-center gap-3">
+                <img src={part.image} className="w-10 h-10 rounded bg-slate-800 object-cover border border-white/5" />
+                <span className="text-sm font-medium">{part.name}</span>
+              </td>
+              <td className="p-4 text-sm font-mono tracking-tighter">${part.price}</td>
+              <td className="p-4 text-sm">{part.stock} units</td>
+              <td className="p-4">
+                <span className="px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 text-[10px] font-black uppercase tracking-widest">High</span>
+              </td>
+              <td className="p-4">
+                <button className="text-cyan-400 hover:text-cyan-300 text-xs font-bold uppercase tracking-widest transition-all">Edit</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
+
+// --- ACCESSORIES PAGE ---
+
+const AccessoriesPage = () => {
+  const accessories = MOCK_PARTS.filter(p => ['monitor', 'keyboard', 'mouse', 'accessory'].includes(p.type));
+  const [filter, setFilter] = useState('all');
+
+  const filteredItems = filter === 'all' ? accessories : accessories.filter(a => a.type === filter);
+
+  return (
+    <div className="pt-24 pb-12 min-h-screen bg-slate-950 px-4">
+      <div className="max-w-7xl mx-auto">
+        <header className="mb-12">
+          <h1 className="text-4xl font-bold text-white mb-4 uppercase tracking-[0.2em]">Artisan Peripherals</h1>
+          <p className="text-slate-500 max-w-2xl text-lg font-light tracking-wide">Complete your sanctuary with our curated selection of high-fidelity monitors and custom-engineered input devices.</p>
+        </header>
+
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Sidebar Filters */}
+          <aside className="w-full md:w-64 space-y-8">
+            <div>
+              <h3 className="text-xs uppercase font-black text-slate-500 tracking-widest mb-4 flex items-center gap-2">
+                <Filter size={14} /> Categories
+              </h3>
+              <div className="space-y-2">
+                {['all', 'monitor', 'keyboard', 'mouse', 'accessory'].map(cat => (
+                  <button 
+                    key={cat}
+                    onClick={() => setFilter(cat)}
+                    className={`w-full text-left px-4 py-2 rounded text-xs uppercase font-bold tracking-widest transition-all ${filter === cat ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-900/20' : 'text-slate-400 hover:text-white hover:bg-slate-900'}`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </aside>
+
+          {/* Catalog Grid */}
+          <main className="flex-1">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredItems.map(item => (
+                <div key={item.id} className="bg-slate-900 border border-white/10 rounded-xl overflow-hidden group hover:border-cyan-500/50 transition-all shadow-xl">
+                  <div className="h-56 overflow-hidden relative">
+                    <img src={item.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={item.name} />
+                    <div className="absolute top-4 right-4">
+                      <span className="px-3 py-1 bg-slate-950/80 backdrop-blur rounded-full text-[10px] font-black uppercase tracking-widest text-cyan-400 border border-white/10">
+                        {item.type}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-lg font-bold text-white uppercase tracking-tight leading-tight">{item.name}</h3>
+                      <div className="text-xl font-mono text-cyan-400 tracking-tighter">${item.price}</div>
+                    </div>
+                    <p className="text-slate-500 text-xs mb-6 uppercase tracking-widest">Supplier: {item.supplierId}</p>
+                    <div className="flex gap-2">
+                      <button className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded text-xs uppercase tracking-widest transition-all">
+                        Details
+                      </button>
+                      <button className="w-12 h-12 flex items-center justify-center bg-cyan-600 hover:bg-cyan-500 text-white rounded transition-all shadow-lg shadow-cyan-900/20">
+                        <Plus size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {filteredItems.length === 0 && (
+              <div className="text-center py-20 text-slate-600 italic">No products found for this criteria.</div>
+            )}
+          </main>
+        </div>
+      </div>
     </div>
   );
 };
 
-// 5. Auth Component
-const AuthPage: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
-  const [step, setStep] = useState<'init' | 'verify'>('init');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', code: '' });
+// --- MAIN CONFIGURATOR ---
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+const Configurator: React.FC<{ user: User | null }> = ({ user }) => {
+  const [selectedParts, setSelectedParts] = useState<Record<string, Part | null>>({
+    chassis: null, cpu: null, gpu: null, ram: null, motherboard: null, psu: null, storage: null
+  });
+  const [activeCategory, setActiveCategory] = useState('chassis');
+  const navigate = useNavigate();
+
+  const handleSelect = (part: Part) => {
+    setSelectedParts(prev => ({ ...prev, [part.type]: part }));
   };
 
-  const runDemoFallback = (action: 'init' | 'verify') => {
-    setError('Backend unreachable. Using Demo Mode.');
-    setTimeout(() => setError(''), 3000);
-    
-    if (action === 'init') {
-      // Simulate sending code
-      setTimeout(() => {
-        setStep('verify');
-        setLoading(false);
-      }, 1500);
-    } else {
-      // Simulate login success
-      setTimeout(() => {
-        onLogin({
-          id: 'demo_user',
-          name: formData.name || 'Demo User',
-          email: formData.email,
-          role: 'user',
-          isFirstTime: true
-        });
-        setLoading(false);
-      }, 1500);
-    }
-  }
-
-  const handleInit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    
-    try {
-      const res = await fetch(`${API_URL}/register-init`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-            name: formData.name, 
-            email: formData.email, 
-            password: formData.password 
-        })
-      });
-      
-      const data = await res.json();
-      
-      if (!res.ok) throw new Error(data.message || 'Error');
-      
-      setStep('verify');
-      setLoading(false);
-    } catch (err: any) {
-      console.warn("Backend error:", err);
-      // Check if it is a fetch error (backend down)
-      if (err.message.includes('Failed to fetch') || err.name === 'TypeError') {
-        runDemoFallback('init');
-        return;
-      }
-      setError(err.message);
-      setLoading(false);
-    }
+  const calculateTotal = () => {
+    return (Object.values(selectedParts) as (Part | null)[]).reduce((acc: number, part: Part | null) => acc + (part?.price || 0), 0);
   };
 
-  const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const res = await fetch(`${API_URL}/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email, code: formData.code })
-      });
-      
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Error');
-      
-      onLogin(data.user);
-    } catch (err: any) {
-      console.warn("Backend error:", err);
-      if (err.message.includes('Failed to fetch') || err.name === 'TypeError') {
-        runDemoFallback('verify');
-        return;
-      }
-      setError(err.message);
-      setLoading(false);
-    }
+  const submitBuild = () => {
+    if (!user) { navigate('/login'); return; }
+    navigate('/builders');
   };
+
+  const categories = [
+    { id: 'chassis', label: 'Chassis', icon: <Box size={14} /> },
+    { id: 'cpu', label: 'CPU', icon: <Cpu size={14} /> },
+    { id: 'motherboard', label: 'Motherboard', icon: <Settings size={14} /> },
+    { id: 'gpu', label: 'GPU', icon: <Zap size={14} /> },
+    { id: 'ram', label: 'RAM', icon: <HardDrive size={14} /> },
+    { id: 'storage', label: 'Storage', icon: <HardDrive size={14} /> },
+    { id: 'psu', label: 'Power', icon: <Zap size={14} /> },
+  ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-slate-950 bg-[url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')] bg-cover bg-center">
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"></div>
-      
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 bg-slate-900/90 p-8 rounded-xl border border-white/10 w-full max-w-md shadow-2xl"
-      >
-        <div className="text-center mb-8">
-          <Zap className="w-12 h-12 text-cyan-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">
-            {step === 'init' ? 'Join Nebula Forge' : 'Verify Identity'}
+    <div className="pt-24 pb-12 min-h-screen bg-slate-950 px-4">
+      <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-8">
+        {/* Left Sidebar: Component Selection */}
+        <div className="lg:col-span-4 bg-slate-900/80 border border-white/10 p-6 rounded-xl h-[80vh] flex flex-col">
+          <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2 uppercase tracking-widest">
+            <Settings className="text-cyan-400" /> CORE SYSTEM
           </h2>
-          <p className="text-slate-400">
-            {step === 'init' 
-              ? 'Create your artisan profile to start building.' 
-              : `Enter the code sent to ${formData.email}`}
-          </p>
+          
+          <div className="flex overflow-x-auto gap-2 mb-6 pb-2 custom-scrollbar scrollbar-hide whitespace-nowrap">
+            {categories.map(cat => (
+              <button 
+                key={cat.id} 
+                onClick={() => setActiveCategory(cat.id)} 
+                className={`px-4 py-2 rounded text-[10px] uppercase font-black transition-all flex items-center gap-2 shrink-0 tracking-widest ${activeCategory === cat.id ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-900/40' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+              >
+                {cat.icon}
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+             {MOCK_PARTS.filter(p => p.type === activeCategory).map(part => (
+                <div 
+                  key={part.id} 
+                  onClick={() => handleSelect(part)} 
+                  className={`p-4 rounded-lg border cursor-pointer transition-all flex items-center gap-4 group ${selectedParts[activeCategory]?.id === part.id ? 'border-cyan-500 bg-cyan-500/10 shadow-[0_0_15px_rgba(34,211,238,0.1)]' : 'border-white/5 bg-slate-800/50 hover:border-white/20'}`}
+                >
+                  <div className="relative overflow-hidden rounded bg-slate-900 w-16 h-16 shrink-0 border border-white/5">
+                    <img src={part.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={part.name} />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-white font-bold text-sm mb-1 uppercase tracking-tight">{part.name}</div>
+                    <div className="text-cyan-400 text-xs font-mono tracking-wider">${part.price.toLocaleString()}</div>
+                  </div>
+                </div>
+             ))}
+             {MOCK_PARTS.filter(p => p.type === activeCategory).length === 0 && (
+               <div className="text-center py-10 text-slate-500 text-[10px] uppercase tracking-widest italic">
+                 Awaiting inventory update...
+               </div>
+             )}
+          </div>
         </div>
 
-        {error && (
-           <div className="mb-4 p-3 bg-red-500/10 border border-red-500/50 rounded flex items-center text-red-400 text-sm">
-             <AlertTriangle className="w-4 h-4 mr-2 flex-shrink-0" />
-             {error}
+        {/* Center Panel: Visualizer */}
+        <div className="lg:col-span-4 flex items-center justify-center bg-slate-900/20 border border-white/5 rounded-xl border-dashed relative overflow-hidden group">
+           <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-purple-500/5 opacity-50"></div>
+           <div className="text-center relative z-10">
+              <div className="w-72 h-[450px] border-4 border-slate-800 rounded-3xl relative overflow-hidden bg-slate-900/50 shadow-2xl backdrop-blur-sm transition-all group-hover:border-cyan-500/30">
+                 <div className="absolute inset-0 bg-gradient-to-t from-cyan-500/20 to-transparent"></div>
+                 <div className="absolute inset-0 flex flex-col items-center justify-center p-8 space-y-4">
+                    {selectedParts.chassis ? (
+                        <div className="animate-pulse flex flex-col items-center">
+                           <Box className="w-40 h-40 text-cyan-400 opacity-20" />
+                           <div className="mt-8 flex flex-col items-center gap-2">
+                              <span className="text-[10px] text-cyan-400/80 font-black tracking-[0.4em] uppercase">Architecture Loaded</span>
+                              <div className="flex gap-1">
+                                {[1,2,3].map(i => <div key={i} className="w-1 h-1 bg-cyan-400 rounded-full animate-bounce" style={{animationDelay: `${i*0.2}s`}}></div>)}
+                              </div>
+                           </div>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center gap-4 opacity-20">
+                          <Box className="w-32 h-32 text-slate-600" />
+                          <span className="text-slate-600 text-[10px] uppercase tracking-[0.4em] font-black">Architecture Offline</span>
+                        </div>
+                    )}
+                 </div>
+              </div>
+              <p className="mt-6 text-[10px] text-slate-500 uppercase tracking-[0.3em] font-bold">Holographic Engine v2.0</p>
            </div>
-        )}
+        </div>
 
-        {step === 'init' ? (
-          <form onSubmit={handleInit} className="space-y-4">
-            <div>
-               <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Full Name</label>
-               <input 
-                 name="name" 
-                 type="text" 
-                 required
-                 value={formData.name}
-                 onChange={handleChange}
-                 className="w-full bg-slate-800 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-cyan-500 transition-colors"
-                 placeholder="e.g. Kai Tan"
-               />
+        {/* Right Sidebar: Summary */}
+        <div className="lg:col-span-4 bg-slate-900/80 border border-white/10 p-6 rounded-xl flex flex-col justify-between h-[80vh]">
+          <div className="flex-1 flex flex-col">
+            <h2 className="text-xl font-bold text-white mb-6 flex justify-between items-center uppercase tracking-widest">
+              SUMMARY
+              <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Estimate Only</span>
+            </h2>
+            
+            <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+              {(Object.entries(selectedParts) as [string, Part | null][]).map(([key, part]) => part && (
+                <div key={key} className="flex justify-between items-center group border-b border-white/[0.03] pb-3 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded bg-slate-800 border border-white/5 flex items-center justify-center text-slate-500 group-hover:text-cyan-400 transition-colors">
+                      {categories.find(c => c.id === key)?.icon || <Tag size={12} />}
+                    </div>
+                    <div>
+                      <div className="text-[9px] text-slate-600 uppercase font-black tracking-widest mb-0.5">{key}</div>
+                      <div className="text-xs text-white truncate w-32 font-medium">{part.name}</div>
+                    </div>
+                  </div>
+                  <div className="text-cyan-400 text-xs font-mono tracking-tighter">${part.price.toLocaleString()}</div>
+                </div>
+              ))}
+              {!Object.values(selectedParts).some(v => v) && (
+                <div className="text-center py-20 text-slate-700">
+                  <ShoppingBag size={48} className="mx-auto mb-4 opacity-10" />
+                  <p className="text-[10px] uppercase tracking-[0.3em] font-black">Engineering Bay Empty</p>
+                </div>
+              )}
             </div>
-            <div>
-               <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Email Address</label>
-               <input 
-                 name="email" 
-                 type="email" 
-                 required
-                 value={formData.email}
-                 onChange={handleChange}
-                 className="w-full bg-slate-800 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-cyan-500 transition-colors"
-                 placeholder="kai@example.com"
-               />
+
+            <div className="mt-6 pt-6 border-t border-white/10 space-y-3">
+              <div className="flex justify-between text-xs uppercase tracking-widest">
+                <span className="text-slate-500 font-bold">BOM Total</span>
+                <span className="text-white font-mono">${calculateTotal().toLocaleString()}.00</span>
+              </div>
+              <div className="flex justify-between text-xs uppercase tracking-widest">
+                <span className="text-slate-500 font-bold">Escrow Fee (2%)</span>
+                <span className="text-white font-mono">${(calculateTotal() * 0.02).toLocaleString()}.00</span>
+              </div>
+              <div className="flex justify-between text-xl font-black mt-4 pt-4 border-t border-white/10">
+                <span className="text-white uppercase tracking-tighter">TOTAL</span>
+                <span className="text-cyan-400 font-mono tracking-tighter">${(calculateTotal() * 1.02).toLocaleString()}.00</span>
+              </div>
             </div>
-            <div>
-               <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Password</label>
-               <input 
-                 name="password" 
-                 type="password" 
-                 required
-                 value={formData.password}
-                 onChange={handleChange}
-                 className="w-full bg-slate-800 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-cyan-500 transition-colors"
-                 placeholder="••••••••"
-               />
-            </div>
+          </div>
+
+          <div className="mt-8 space-y-4">
             <button 
-              type="submit" 
-              disabled={loading}
-              className="w-full py-3 mt-4 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all flex items-center justify-center"
+              onClick={submitBuild} 
+              disabled={!selectedParts.chassis || !selectedParts.cpu}
+              className="w-full py-4 bg-cyan-600 rounded text-xs font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-cyan-500 shadow-xl shadow-cyan-900/30 disabled:opacity-30 disabled:pointer-events-none"
             >
-              {loading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Create Account'}
+              Initialize Escrow
             </button>
-          </form>
-        ) : (
-          <form onSubmit={handleVerify} className="space-y-4">
-            <div>
-               <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Verification Code</label>
-               <input 
-                 name="code" 
-                 type="text" 
-                 required
-                 value={formData.code}
-                 onChange={handleChange}
-                 className="w-full bg-slate-800 border border-white/10 rounded-lg p-3 text-white text-center text-2xl tracking-[0.5em] font-mono focus:outline-none focus:border-cyan-500 transition-colors"
-                 placeholder="••••••"
-                 maxLength={6}
-               />
+            <div className="flex items-center justify-center gap-1.5">
+              {[1,2,3].map(i => <div key={i} className={`w-1.5 h-1.5 rounded-full ${i === 1 ? 'bg-cyan-500' : 'bg-slate-800'}`}></div>)}
             </div>
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="w-full py-3 mt-4 bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all flex items-center justify-center"
-            >
-              {loading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Verify & Login'}
-            </button>
-            <button 
-              type="button" 
-              onClick={() => setStep('init')}
-              className="w-full py-2 text-slate-400 hover:text-white text-sm"
-            >
-              Back to Sign Up
-            </button>
-          </form>
-        )}
-      </motion.div>
+          </div>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+// --- BUILDER APPLICATION ---
+
+const BuilderApplication = () => {
+  const [formData, setFormData] = useState({ businessName: '', email: '', location: '', experience: '', specialty: '', portfolioLinks: '', instagram: '' });
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await fetch(`${API_URL}/builder-apply`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+      setSubmitted(true);
+    } catch (err) { setError('Submission failed.'); }
+    finally { setLoading(false); }
+  };
+
+  if (submitted) {
+    return (
+      <div className="pt-32 text-center px-4">
+        <div className="w-20 h-20 bg-cyan-500/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-cyan-500/20">
+          <CheckCircle size={40} className="text-cyan-400" />
+        </div>
+        <h2 className="text-3xl font-bold text-white uppercase tracking-[0.2em] mb-4">Transmission Sent</h2>
+        <p className="text-slate-500 mt-4 max-w-md mx-auto text-lg">Our vetting team will analyze your portfolio data. Expect a response via encrypted channel within 72 hours.</p>
+        <Link to="/" className="mt-12 inline-block px-8 py-4 border border-cyan-500/50 text-cyan-400 font-black uppercase tracking-[0.2em] hover:bg-cyan-500/10 transition-all rounded">Back to Command Center</Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="pt-24 pb-12 max-w-2xl mx-auto px-4">
+      <h1 className="text-4xl font-bold text-white text-center mb-8 uppercase tracking-[0.2em]">Recruitment Portal</h1>
+      <form onSubmit={handleSubmit} className="bg-slate-900 border border-white/10 p-10 rounded-2xl space-y-8 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600"></div>
+        
+        <div className="space-y-2">
+          <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-black">Division / Builder Name</label>
+          <input required name="businessName" placeholder="e.g. TITAN SYSTEMS" onChange={(e) => setFormData({...formData, businessName: e.target.value})} className="w-full bg-slate-950 border border-white/10 p-4 rounded text-white outline-none focus:border-cyan-500 transition-all font-medium" />
+        </div>
+        <div className="space-y-2">
+          <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-black">Communication Email</label>
+          <input required type="email" name="email" placeholder="nexus@nebula.sg" onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full bg-slate-950 border border-white/10 p-4 rounded text-white outline-none focus:border-cyan-500 transition-all font-medium" />
+        </div>
+        <div className="space-y-2">
+          <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-black">Engineering Portfolio</label>
+          <textarea required name="portfolioLinks" placeholder="Drive links, Imgur, or Website URLs..." onChange={(e) => setFormData({...formData, portfolioLinks: e.target.value})} className="w-full bg-slate-950 border border-white/10 p-4 rounded text-white outline-none focus:border-cyan-500 h-32 text-white resize-none transition-all font-medium" />
+        </div>
+        <button type="submit" disabled={loading} className="w-full py-5 bg-cyan-600 rounded text-xs font-black uppercase tracking-[0.3em] text-white transition-all hover:bg-cyan-500 disabled:opacity-50 shadow-lg shadow-cyan-900/30">
+          {loading ? 'Transmitting Data...' : 'Submit Application'}
+        </button>
+      </form>
+    </div>
+  );
+};
+
+const AuthPage: React.FC<{ onLogin: (u: User) => void }> = ({ onLogin }) => {
+  const [role, setRole] = useState<'buyer' | 'builder' | 'supplier'>('buyer');
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
+      <div className="max-w-md w-full bg-slate-900 p-10 rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600"></div>
+        <h2 className="text-2xl font-black text-white text-center mb-8 uppercase tracking-[0.2em]">Authentication Required</h2>
+        <div className="flex gap-2 mb-10">
+          {['buyer', 'builder', 'supplier'].map(r => (
+            <button key={r} onClick={() => setRole(r as any)} className={`flex-1 py-3 rounded text-[10px] uppercase font-black transition-all tracking-widest ${role === r ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-900/40' : 'bg-slate-800 text-slate-600 hover:text-slate-400'}`}>
+              {r}
+            </button>
+          ))}
+        </div>
+        <button onClick={() => onLogin({ id: 'demo', name: 'Demo ' + role, email: 'demo@forge.sg', role, isFirstTime: true })} className="w-full py-5 bg-cyan-600 rounded text-xs font-black text-white uppercase tracking-[0.3em] hover:bg-cyan-500 transition-all shadow-xl shadow-cyan-900/20">
+          Initialize Demo {role}
+        </button>
+        {role === 'builder' && <Link to="/apply-builder" className="block mt-8 text-center text-cyan-400 text-[10px] font-black uppercase hover:underline tracking-widest transition-all">Request Recruitment Access</Link>}
+      </div>
+    </div>
+  );
+};
+
+// --- APP CORE ---
 
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
 
-  const handleLogin = (userData: User) => {
-    setUser(userData);
-    navigate('/'); // Redirect to home after login
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    navigate('/');
-  };
-
   return (
     <div className="bg-slate-950 min-h-screen text-slate-200 font-sans selection:bg-cyan-500/30">
-      <Navbar user={user} onLogout={handleLogout} />
+      <Navbar user={user} onLogout={() => { setUser(null); navigate('/'); }} />
       <Routes>
         <Route path="/" element={
           <>
@@ -1047,45 +667,38 @@ const App = () => {
           </>
         } />
         <Route path="/customize" element={<Configurator user={user} />} />
+        <Route path="/accessories" element={<AccessoriesPage />} />
+        <Route path="/builders" element={<BuilderMarketplace />} />
+        <Route path="/jobs" element={<BuilderDashboard />} />
+        <Route path="/inventory" element={<SupplierPortal />} />
+        <Route path="/apply-builder" element={<BuilderApplication />} />
         <Route path="/gallery" element={
-          <div className="pt-24 px-4 max-w-7xl mx-auto">
-            <h2 className="text-3xl font-bold text-white mb-8">Community Showcase</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="pt-24 px-4 max-w-7xl mx-auto pb-20">
+            <h2 className="text-4xl font-black text-white mb-12 uppercase tracking-[0.2em]">Artisan Archives</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {MOCK_GALLERY.map(item => (
-                <div key={item.id} className="bg-slate-900 border border-white/10 rounded-xl overflow-hidden hover:border-cyan-500/50 transition-all">
-                  <img src={item.image} alt={item.user} className="w-full h-48 object-cover" />
-                  <div className="p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <h3 className="font-bold text-white">{item.user}</h3>
-                      {item.approved && <CheckCircle className="w-4 h-4 text-green-400" />}
+                <div key={item.id} className="bg-slate-900 border border-white/10 rounded-xl overflow-hidden hover:border-cyan-500/50 transition-all group shadow-2xl">
+                  <div className="h-64 overflow-hidden relative">
+                    <img src={item.image} alt={item.builderName} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  </div>
+                  <div className="p-8">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="font-black text-white uppercase tracking-wider text-xl">{item.builderName}</h3>
+                      <Award size={20} className="text-cyan-400" />
                     </div>
-                    <p className="text-xs text-cyan-400 mb-2">{item.specs}</p>
-                    <p className="text-sm text-slate-400">"{item.review}"</p>
+                    <div className="flex items-center gap-2 mb-4">
+                      <Tag size={12} className="text-cyan-600" />
+                      <p className="text-[10px] text-cyan-400 uppercase font-black tracking-widest">{item.specs}</p>
+                    </div>
+                    <p className="text-slate-400 italic text-sm leading-relaxed">"{item.review}"</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
         } />
-        <Route path="/builders" element={
-            <div className="pt-24 text-center">
-                <h2 className="text-2xl text-white">Builder Portal</h2>
-                <p className="text-slate-400">Coming Soon</p>
-            </div>
-        } />
-        <Route path="/accessories" element={
-            <div className="pt-24 text-center">
-                <h2 className="text-2xl text-white">Accessories</h2>
-                <p className="text-slate-400">Coming Soon</p>
-            </div>
-        } />
-        <Route path="/login" element={<AuthPage onLogin={handleLogin} />} />
-        <Route path="*" element={
-            <div className="pt-32 text-center">
-                <h2 className="text-2xl text-white">404</h2>
-                <Link to="/" className="text-cyan-400">Go Home</Link>
-            </div>
-        } />
+        <Route path="/login" element={<AuthPage onLogin={(u) => { setUser(u); navigate(u.role === 'buyer' ? '/customize' : u.role === 'builder' ? '/jobs' : '/inventory'); }} />} />
       </Routes>
     </div>
   );
